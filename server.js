@@ -3,7 +3,7 @@ const http = require('http');
 const path = require('path');
 
 const PORT = process.env.PORT || 8080;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDHH9STm6mvXbcVPz9ntExC_uaI5IojfYGw6MRv5J8ays6hbJXRa_rKItE2__Mn7nq/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztrmvWWd8dBI5IOeYu2nwb6Tb9dhFVFL_xVpR2OtbYBKAzgNt6h9ZZKIacxGOsYbeh/exec";
 
 // Armazenamento do estado dos Totens e Administradores
 const totems = {};
