@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Totem Player</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #000;
+      font-family: Arial, sans-serif;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #app-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* FORÇAR VERTICAL EM TELAS HORIZONTAIS DE COMPUTADOR (Modo Padrão) */
+    @media (min-width: 768px) and (orientation: landscape) {
+      #app-container {
+        width: 100vh;
+        height: 100vw;
+        transform: rotate(-90deg);
+        transform-origin: center center;
+      }
+    }
+
+    /* Classe para alterar orientação via comandos do admin */
+    .landscape {
+      transform: rotate(0deg) !important;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    /* Indicador visual de Conexão no Totem */
+    #connection-status {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 9999;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    .status-dot.offline { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+    #media-display {
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 60px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #media-display img, 
+    #media-display video, 
+    #media-display iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+    }
+
+    #footer-ticker {
+      height: 60px;
+      width: 100%;
+      background-color: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      border-top: 2px solid #333;
+    }
+
+    .ticker-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      padding-left: 100%;
+      animation: ticker 15s linear infinite;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .ticker-icon {
+      height: 30px;
+      width: auto;
+      vertical-align: middle;
+    }
+
+    @keyframes ticker {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Indicador de Status On-line / Off-line -->
+    <div id="connection-status">
+      <span class="status-dot offline" id="status-dot"></span>
+      <span id="status-text">Offline</span>
+    </div>
+
+    <div id="media-display">
+      <img id="current-media" src="https://via.placeholder.com/1080x1920?text=Aguardando+Conteudo" alt="Mídia Totem">
+    </div>
+
+    <div id="footer-ticker">
+      <div class="ticker-content" id="ticker-text">
+        <span>Bem-vindo!</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SERVER_URL = "wss://totem1.onrender.com";
+
+    let totemId = localStorage.getItem("totemId");
+    if (!totemId) {
+      totemId = "totem_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("totemId", totemId);
+    }
+
+    let socket;
+    let pingInterval;
+
+    // Controle de Playlist
+    let playlist = [];
+    let currentPlaylistIndex = 0;
+
+    // Estado local mantido
+    let currentConfig = {
+      orientation: "portrait",
+      mediaType: "image",
+      mediaUrl: "https://via.placeholder.com/1080x1920?text=Aguardando+Conteudo",
+      tickerText: "Bem-vindo!",
+      tickerIcon: ""
+    };
+
+    function updateConnectionUI(isOnline) {
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
+
+      if (isOnline) {
+        dot.className = "status-dot online";
+        text.textContent = "Online";
+      } else {
+        dot.className = "status-dot offline";
+        text.textContent = "Offline";
+      }
+    }
+
+    function saveStateToLocalStorage() {
+      localStorage.setItem(`totem_config_${totemId}`, JSON.stringify(currentConfig));
+    }
+
+    function loadStateFromLocalStorage() {
+      const saved = localStorage.getItem(`totem_config_${totemId}`);
+      if (saved) {
+        try {
+          currentConfig = JSON.parse(saved);
+          applyDisplayState(currentConfig);
+        } catch (e) {
+          console.error("Erro ao carregar estado local:", e);
+        }
+      }
+    }
+
+    function connectWebSocket() {
+      socket = new WebSocket(SERVER_URL);
+
+      socket.onopen = () => {
+        console.log("Conectado ao servidor. Totem ID:", totemId);
+        updateConnectionUI(true);
+
+        socket.send(JSON.stringify({
+          type: "register_totem",
+          totemId: totemId,
+          orientation: currentConfig.orientation || "portrait",
+          status: "online"
+        }));
+
+        clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 25000);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "pong") return;
+          handleServerCommand(data);
+        } catch (e) {
+          console.error("Erro ao processar mensagem:", e);
+        }
+      };
+
+      socket.onclose = () => {
+        console.warn("Conexão perdida. Reconectando em 5 segundos...");
+        updateConnectionUI(false);
+        clearInterval(pingInterval);
+        setTimeout(connectWebSocket, 5000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("Erro no WebSocket:", err);
+        socket.close();
+      };
+    }
+
+    function playCurrentMedia() {
+      const mediaDisplay = document.getElementById("media-display");
+      if (playlist.length === 0) return;
+
+      const currentUrl = playlist[currentPlaylistIndex];
+      const type = currentConfig.mediaType || "image";
+
+      if (type === "video") {
+        let video = mediaDisplay.querySelector("video");
+        
+        if (!video) {
+          mediaDisplay.innerHTML = `<video id="active-video" autoplay muted playsinline></video>`;
+          video = document.getElementById("active-video");
+        }
+
+        video.src = currentUrl;
+
+        video.onended = () => {
+          if (playlist.length > 0) {
+            currentPlaylistIndex = (currentPlaylistIndex + 1) % playlist.length;
+            playCurrentMedia();
+          }
+        };
+
+        video.onerror = () => {
+          console.error("Erro ao carregar o vídeo:", currentUrl);
+          if (playlist.length > 1) {
+            setTimeout(() => {
+              currentPlaylistIndex = (currentPlaylistIndex + 1) % playlist.length;
+              playCurrentMedia();
+            }, 3000);
+          }
+        };
+
+        video.play().catch(e => console.warn("Autoplay impedido pelo navegador:", e));
+
+      } else if (type === "iframe") {
+        mediaDisplay.innerHTML = `<iframe src="${currentUrl}"></iframe>`;
+      } else {
+        mediaDisplay.innerHTML = `<img src="${currentUrl}" alt="Mídia Totem">`;
+      }
+    }
+
+    function applyDisplayState(data) {
+      const container = document.getElementById("app-container");
+      const tickerText = document.getElementById("ticker-text");
+
+      // 1. Orientação
+      if (data.orientation) {
+        currentConfig.orientation = data.orientation;
+        if (data.orientation === "landscape") {
+          container.classList.add("landscape");
+        } else {
+          container.classList.remove("landscape");
+        }
+      }
+
+      // 2. Mídia / Playlist
+      if (data.mediaUrl !== undefined) {
+        currentConfig.mediaUrl = data.mediaUrl;
+        currentConfig.mediaType = data.mediaType || "image";
+
+        const newPlaylist = data.mediaUrl
+          .split(/[\n,]+/)
+          .map(u => u.trim())
+          .filter(u => u.length > 0);
+
+        playlist = newPlaylist.length > 0 ? newPlaylist : ["https://via.placeholder.com/1080x1920?text=Sem+Midia"];
+        currentPlaylistIndex = 0;
+
+        playCurrentMedia();
+      }
+
+      // 3. Letreiro
+      if (data.tickerText !== undefined) {
+        currentConfig.tickerText = data.tickerText;
+        currentConfig.tickerIcon = data.tickerIcon || "";
+
+        tickerText.innerHTML = "";
+        if (data.tickerIcon) {
+          const img = document.createElement("img");
+          img.src = data.tickerIcon;
+          img.className = "ticker-icon";
+          img.alt = "ícone";
+          tickerText.appendChild(img);
+        }
+
+        const span = document.createElement("span");
+        span.textContent = data.tickerText;
+        tickerText.appendChild(span);
+      }
+
+      saveStateToLocalStorage();
+    }
+
+    function handleServerCommand(data) {
+      applyDisplayState(data);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadStateFromLocalStorage();
+      connectWebSocket();
+    });
+  </script>
+</body>
+</html>
