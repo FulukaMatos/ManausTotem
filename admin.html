@@ -1,491 +1,735 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Administrativo - Controle de Totens</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f9;
-      color: #333;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+<meta charset="UTF-8">
 
-    #sidebar {
-      width: 320px;
-      background-color: #1e293b;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #334155;
-    }
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    #sidebar h2 {
-      padding: 20px;
-      font-size: 1.2rem;
-      border-bottom: 1px solid #334155;
-      background-color: #0f172a;
-    }
+<title>Manaus Totem - Admin</title>
 
-    #totem-list {
-      list-style: none;
-      overflow-y: auto;
-      flex: 1;
-    }
+<style>
 
-    .totem-item {
-      padding: 15px 20px;
-      border-bottom: 1px solid #334155;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: background 0.2s;
-    }
+*{
+  box-sizing:border-box;
+}
 
-    .totem-item:hover, .totem-item.active {
-      background-color: #334155;
-    }
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f2f2f2;
+  color:#222;
+}
 
-    .totem-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-    }
+.layout{
+  display:flex;
+  height:100vh;
+  overflow:hidden;
+}
 
-    .totem-item-sub {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
+.sidebar{
+  width:320px;
+  background:#151515;
+  color:#fff;
+  padding:18px;
+  overflow:auto;
+}
 
-    .status-pill {
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
+.sidebar h2{
+  margin-top:0;
+}
 
-    .status-pill.online {
-      background-color: rgba(34, 197, 94, 0.2);
-      color: #4ade80;
-      border: 1px solid #22c55e;
-    }
+.status{
+  font-size:13px;
+  margin-bottom:15px;
+}
 
-    .status-pill.offline {
-      background-color: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid #ef4444;
-    }
+.dot{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#d00;
+  margin-right:6px;
+}
 
-    .orientation-tag {
-      background-color: #0f172a;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-    }
+.dot.online{
+  background:#19c719;
+}
 
-    #main-content {
-      flex: 1;
-      padding: 30px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+.totem-item{
+  padding:12px;
+  border-radius:8px;
+  background:#242424;
+  margin-bottom:8px;
+  cursor:pointer;
+}
 
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
+.totem-item.selected{
+  outline:2px solid #fff;
+}
 
-    .card h3 {
-      margin-bottom: 15px;
-      color: #0f172a;
-      border-bottom: 2px solid #f1f5f9;
-      padding-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.totem-item small{
+  display:block;
+  color:#bbb;
+  margin-top:5px;
+}
 
-    .form-group {
-      margin-bottom: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
+.main{
+  flex:1;
+  padding:25px;
+  overflow:auto;
+}
 
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #475569;
-    }
+.card{
+  background:#fff;
+  border-radius:10px;
+  padding:20px;
+  max-width:850px;
+}
 
-    input, select, textarea, button {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      font-size: 1rem;
-      font-family: inherit;
-    }
+label{
+  display:block;
+  font-weight:bold;
+  margin:15px 0 6px;
+}
 
-    textarea {
-      resize: vertical;
-      min-height: 90px;
-    }
+input,
+textarea,
+select{
+  width:100%;
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  font-size:15px;
+}
 
-    button {
-      background-color: #2563eb;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+textarea{
+  min-height:130px;
+  resize:vertical;
+}
 
-    button:hover {
-      background-color: #1d4ed8;
-    }
+button{
+  padding:10px 16px;
+  border:0;
+  border-radius:6px;
+  cursor:pointer;
+  margin:8px 6px 0 0;
+}
 
-    .btn-group {
-      display: flex;
-      gap: 10px;
-    }
+.save{
+  background:#1683ff;
+  color:#fff;
+}
 
-    .btn-secondary {
-      background-color: #64748b;
-    }
+.delete{
+  background:#d33;
+  color:#fff;
+}
 
-    .btn-secondary:hover {
-      background-color: #475569;
-    }
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
 
-    .btn-danger {
-      background-color: #ef4444;
-    }
+</style>
 
-    .btn-danger:hover {
-      background-color: #dc2626;
-    }
-
-    #totem-info {
-      font-size: 0.95rem;
-      color: #64748b;
-      margin-bottom: 15px;
-    }
-
-    .field-hint {
-      font-size: 0.8rem;
-      color: #64748b;
-    }
-  </style>
 </head>
+
 <body>
 
-  <div id="sidebar">
-    <h2>Totens Cadastrados</h2>
-    <ul id="totem-list"></ul>
-  </div>
+<div class="layout">
 
-  <div id="main-content">
-    
-    <div class="card">
-      <h3>
-        <span id="selected-totem-title">Selecione um Totem</span>
-        <span id="selected-totem-status-badge"></span>
-      </h3>
-      <div id="totem-info">Nenhum totem selecionado no momento.</div>
+<aside class="sidebar">
 
-      <div class="form-group" style="margin-top: 10px;">
-        <label for="totem-name-input">Nome Personalizado do Totem:</label>
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="totem-name-input" placeholder="Ex: Totem Entrada Principal" style="flex: 1;">
-          <button id="btn-save-name">Salvar Nome</button>
-        </div>
-      </div>
+<h2>Manaus Totem</h2>
 
-      <!-- BOTÃO DE EXCLUIR TOTEM -->
-      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end;">
-        <button id="btn-delete-totem" class="btn-danger" style="font-size: 0.85rem; padding: 8px 14px;">🗑️ Excluir Totem do Sistema</button>
-      </div>
-    </div>
+<div class="status">
 
-    <div class="card">
-      <h3>Exibição de Mídia / Playlist</h3>
-      <div class="form-group">
-        <label for="media-type">Tipo de Mídia:</label>
-        <select id="media-type">
-          <option value="image">Imagem (URL)</option>
-          <option value="video">Vídeo / Playlist de Vídeos (URL)</option>
-          <option value="iframe">Página Web (iFrame / URL)</option>
-        </select>
-      </div>
+<span id="statusDot"
+      class="dot"></span>
 
-      <div class="form-group">
-        <label for="media-url">URL(s) do Conteúdo:</label>
-        <textarea id="media-url" placeholder="Insira a URL aqui. Para criar uma PLAYLIST de vídeos, cole um link por linha..."></textarea>
-        <span class="field-hint">💡 Dica: Para criar uma playlist, cole os links de vídeo um embaixo do outro (um por linha).</span>
-      </div>
+<span id="statusText">
+Desconectado
+</span>
 
-      <button id="btn-send-media">Atualizar Mídia / Playlist</button>
-    </div>
+</div>
 
-    <div class="card">
-      <h3>Configuração do Letreiro Rodapé</h3>
-      <div class="form-group">
-        <label for="ticker-text">Texto do Letreiro:</label>
-        <input type="text" id="ticker-text" placeholder="Digite a mensagem que irá rolar...">
-      </div>
+<div id="totemList"></div>
 
-      <div class="form-group">
-        <label for="ticker-icon">URL do Ícone (Opcional):</label>
-        <input type="url" id="ticker-icon" placeholder="https://exemplo.com/icone.png">
-      </div>
+</aside>
 
-      <button id="btn-send-ticker">Atualizar Letreiro</button>
-    </div>
 
-    <div class="card">
-      <h3>Orientação do Totem</h3>
-      <div class="btn-group">
-        <button id="btn-portrait" class="btn-secondary">📱 Modo Retrato (Em pé)</button>
-        <button id="btn-landscape" class="btn-secondary">📺 Modo Paisagem (Deitado)</button>
-      </div>
-    </div>
+<main class="main">
 
-  </div>
+<div class="card">
 
-  <script>
-    const SERVER_URL = "wss://totem1.onrender.com";
-    let socket;
-    let selectedTotemId = null;
-    let totens = {};
+<h2>Configuração do Totem</h2>
 
-    function connectWebSocket() {
-      socket = new WebSocket(SERVER_URL);
+<p id="selectedInfo">
+Selecione um totem.
+</p>
 
-      socket.onopen = () => {
-        console.log("Painel Admin conectado ao WebSocket.");
-        socket.send(JSON.stringify({ type: "register_admin" }));
-      };
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          handleServerMessage(data);
-        } catch (e) {
-          console.error("Erro ao ler mensagem do servidor:", e);
+<label>
+Nome / Loja
+</label>
+
+<input id="name">
+
+
+<label>
+Tipo de mídia
+</label>
+
+<select id="mediaType">
+
+<option value="image">
+Imagem
+</option>
+
+<option value="video">
+Vídeo
+</option>
+
+<option value="iframe">
+Iframe
+</option>
+
+</select>
+
+
+<label>
+URLs da playlist
+</label>
+
+<textarea
+  id="mediaUrl"
+  placeholder="Uma URL por linha">
+</textarea>
+
+
+<label>
+Texto do letreiro
+</label>
+
+<input id="tickerText">
+
+
+<label>
+Ícone do letreiro (URL)
+</label>
+
+<input id="tickerIcon">
+
+
+<label>
+Orientação
+</label>
+
+<select id="orientation">
+
+<option value="portrait">
+Retrato
+</option>
+
+<option value="landscape">
+Paisagem
+</option>
+
+</select>
+
+
+<div class="row">
+
+<button
+  class="save"
+  id="saveName">
+Salvar nome
+</button>
+
+<button
+  class="save"
+  id="saveMedia">
+Salvar mídia
+</button>
+
+<button
+  class="save"
+  id="saveTicker">
+Salvar letreiro
+</button>
+
+<button
+  class="save"
+  id="saveOrientation">
+Salvar orientação
+</button>
+
+<button
+  class="delete"
+  id="deleteTotem">
+Excluir totem
+</button>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+
+<script>
+
+const SERVER_URL =
+  "wss://manaustotem.onrender.com";
+
+let socket = null;
+
+let reconnectTimer = null;
+
+let totems = {};
+
+let selectedTotemId = null;
+
+
+const statusDot =
+  document.getElementById(
+    "statusDot"
+  );
+
+const statusText =
+  document.getElementById(
+    "statusText"
+  );
+
+const list =
+  document.getElementById(
+    "totemList"
+  );
+
+
+function setStatus(online){
+
+  statusDot.classList.toggle(
+    "online",
+    online
+  );
+
+  statusText.textContent =
+    online
+      ? "Conectado"
+      : "Desconectado";
+}
+
+
+function connect(){
+
+  if(
+    socket &&
+    (
+      socket.readyState ===
+      WebSocket.OPEN ||
+      socket.readyState ===
+      WebSocket.CONNECTING
+    )
+  ){
+    return;
+  }
+
+
+  socket =
+    new WebSocket(
+      SERVER_URL
+    );
+
+
+  socket.onopen = ()=>{
+
+    setStatus(true);
+
+    socket.send(
+      JSON.stringify({
+        type:"register_admin"
+      })
+    );
+  };
+
+
+  socket.onmessage =
+    event=>{
+
+      try{
+
+        const data =
+          JSON.parse(
+            event.data
+          );
+
+
+        if(
+          data.type ===
+          "totem_list"
+        ){
+
+          totems =
+            data.totems || {};
+
+          renderList();
+
+
+          if(
+            selectedTotemId &&
+            totems[selectedTotemId]
+          ){
+
+            populateForm(
+              totems[
+                selectedTotemId
+              ]
+            );
+          }
         }
+
+      }catch(e){}
+    };
+
+
+  socket.onclose = ()=>{
+
+    setStatus(false);
+
+    scheduleReconnect();
+  };
+
+
+  socket.onerror = ()=>{
+
+    setStatus(false);
+
+    try{
+      socket.close();
+    }catch(e){}
+  };
+}
+
+
+function scheduleReconnect(){
+
+  if(reconnectTimer){
+    return;
+  }
+
+  reconnectTimer =
+    setTimeout(()=>{
+
+      reconnectTimer = null;
+
+      connect();
+
+    },3000);
+}
+
+
+function renderList(){
+
+  list.innerHTML = "";
+
+
+  Object.values(totems)
+    .forEach(t=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+      item.className =
+        "totem-item" +
+        (
+          t.id ===
+          selectedTotemId
+            ? " selected"
+            : ""
+        );
+
+
+      item.innerHTML = `
+
+        <strong>
+          ${escapeHtml(
+            t.name || t.id
+          )}
+        </strong>
+
+        <small>
+          ${
+            t.online
+              ? "● Online"
+              : "○ Offline"
+          }
+        </small>
+
+      `;
+
+
+      item.onclick = ()=>{
+
+        selectedTotemId =
+          t.id;
+
+        renderList();
+
+        populateForm(t);
       };
 
-      socket.onclose = () => {
-        setTimeout(connectWebSocket, 3000);
-      };
-    }
 
-    function handleServerMessage(data) {
-      // 1. Recebeu lista completa de totens do servidor
-      if (data.totems) {
-        totens = {}; // Reseta lista local para refletir o estado real do servidor
-        Object.keys(data.totems).forEach(id => {
-          const item = data.totems[id];
-          const isOffline = item.status === "offline" || item.status === "disconnected" || item.online === false;
-          const currentStatus = isOffline ? "offline" : "online";
+      list.appendChild(item);
+    });
+}
 
-          totens[id] = {
-            ...item,
-            status: currentStatus
-          };
-        });
-      } 
-      // 2. Recebeu evento direto de um totem
-      else if (data.totemId || data.id) {
-        const id = data.totemId || data.id;
-        const isDisconnect = data.type === "totem_disconnected" || data.type === "disconnect" || data.status === "offline";
-        const currentStatus = isDisconnect ? "offline" : "online";
 
-        totens[id] = {
-          ...(totens[id] || {}),
-          ...data,
-          status: currentStatus
-        };
-      }
+function populateForm(t){
 
-      renderTotemList();
+  document.getElementById(
+    "selectedInfo"
+  ).textContent =
+    `${t.id} — ${
+      t.online
+        ? "Online"
+        : "Offline"
+    }`;
 
-      if (selectedTotemId && totens[selectedTotemId]) {
-        populateFormForSelectedTotem();
-      } else if (selectedTotemId && !totens[selectedTotemId]) {
-        // Se o totem selecionado foi excluído, reseta a seleção
-        resetSelection();
-      }
-    }
 
-    function renderTotemList() {
-      const listContainer = document.getElementById("totem-list");
-      listContainer.innerHTML = "";
+  document.getElementById(
+    "name"
+  ).value =
+    t.name ||
+    t.storeName ||
+    "";
 
-      Object.keys(totens).forEach(id => {
-        const totem = totens[id];
-        const displayName = totem.name || totem.storeName || id;
-        const orientationLabel = totem.orientation === "landscape" ? "📺 Paisagem" : "📱 Retrato";
-        const isOnline = totem.status === "online";
-        const statusClass = isOnline ? "online" : "offline";
-        const statusText = isOnline ? "🟢 Online" : "🔴 Offline";
 
-        const li = document.createElement("li");
-        li.className = `totem-item ${selectedTotemId === id ? 'active' : ''}`;
-        
-        li.innerHTML = `
-          <div class="totem-item-header">
-            <span>${displayName}</span>
-            <span class="status-pill ${statusClass}">${statusText}</span>
-          </div>
-          <div class="totem-item-sub">
-            <span>ID: ${id}</span>
-            <span class="orientation-tag">${orientationLabel}</span>
-          </div>
-        `;
+  document.getElementById(
+    "mediaType"
+  ).value =
+    t.mediaType ||
+    "image";
 
-        li.onclick = () => selectTotem(id);
-        listContainer.appendChild(li);
-      });
-    }
 
-    function selectTotem(id) {
-      selectedTotemId = id;
-      renderTotemList();
-      populateFormForSelectedTotem();
-    }
+  document.getElementById(
+    "mediaUrl"
+  ).value =
+    t.mediaUrl ||
+    "";
 
-    function resetSelection() {
-      selectedTotemId = null;
-      document.getElementById("selected-totem-title").innerText = "Selecione um Totem";
-      document.getElementById("selected-totem-status-badge").innerText = "";
-      document.getElementById("selected-totem-status-badge").className = "";
-      document.getElementById("totem-info").innerText = "Nenhum totem selecionado no momento.";
-      document.getElementById("totem-name-input").value = "";
-      document.getElementById("media-type").value = "image";
-      document.getElementById("media-url").value = "";
-      document.getElementById("ticker-text").value = "";
-      document.getElementById("ticker-icon").value = "";
-      renderTotemList();
-    }
 
-    function populateFormForSelectedTotem() {
-      if (!selectedTotemId || !totens[selectedTotemId]) return;
+  document.getElementById(
+    "tickerText"
+  ).value =
+    t.tickerText ||
+    "";
 
-      const totem = totens[selectedTotemId];
-      const displayName = totem.name || totem.storeName || selectedTotemId;
-      const isOnline = totem.status === "online";
 
-      document.getElementById("selected-totem-title").innerText = `Totem: ${displayName}`;
-      
-      const badge = document.getElementById("selected-totem-status-badge");
-      badge.className = `status-pill ${isOnline ? 'online' : 'offline'}`;
-      badge.innerText = isOnline ? "🟢 Online" : "🔴 Offline";
+  document.getElementById(
+    "tickerIcon"
+  ).value =
+    t.tickerIcon ||
+    "";
 
-      document.getElementById("totem-info").innerText = 
-        `ID: ${selectedTotemId} | Estado: ${isOnline ? 'Conectado' : 'Desconectado'} | Orientação: ${totem.orientation || 'portrait'}`;
 
-      document.getElementById("totem-name-input").value = totem.name || totem.storeName || "";
-      document.getElementById("media-type").value = totem.mediaType || "image";
-      document.getElementById("media-url").value = totem.mediaUrl || "";
-      document.getElementById("ticker-text").value = totem.tickerText || "";
-      document.getElementById("ticker-icon").value = totem.tickerIcon || "";
-    }
+  document.getElementById(
+    "orientation"
+  ).value =
+    t.orientation ||
+    "portrait";
+}
 
-    function sendCommand(payload) {
-      if (!selectedTotemId) {
-        alert("Por favor, selecione um totem na lista lateral primeiro.");
-        return;
-      }
 
-      if (totens[selectedTotemId]) {
-        Object.assign(totens[selectedTotemId], payload);
-      }
+function sendCommand(payload){
 
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: "totem_command",
-          totemId: selectedTotemId,
-          ...payload
-        }));
-        renderTotemList();
-      } else {
-        alert("Erro de conexão com o servidor.");
-      }
-    }
+  if(!selectedTotemId){
 
-    // AÇÕES DOS BOTÕES
-    document.getElementById("btn-save-name").onclick = () => {
-      const newName = document.getElementById("totem-name-input").value.trim();
-      if (!newName) return alert("Digite um nome válido para o totem.");
-      sendCommand({ name: newName });
-    };
+    alert(
+      "Selecione um totem."
+    );
 
-    document.getElementById("btn-send-media").onclick = () => {
-      const type = document.getElementById("media-type").value;
-      const url = document.getElementById("media-url").value.trim();
-      if (!url) return alert("Insira pelo menos uma URL válida.");
-      sendCommand({ mediaType: type, mediaUrl: url });
-    };
+    return;
+  }
 
-    document.getElementById("btn-send-ticker").onclick = () => {
-      const text = document.getElementById("ticker-text").value;
-      const icon = document.getElementById("ticker-icon").value;
-      sendCommand({ tickerText: text, tickerIcon: icon });
-    };
 
-    document.getElementById("btn-portrait").onclick = () => {
-      sendCommand({ orientation: "portrait" });
-    };
+  if(
+    !socket ||
+    socket.readyState !==
+    WebSocket.OPEN
+  ){
 
-    document.getElementById("btn-landscape").onclick = () => {
-      sendCommand({ orientation: "landscape" });
-    };
+    alert(
+      "Admin está desconectado."
+    );
 
-    // BOTÃO EXCLUIR TOTEM
-    document.getElementById("btn-delete-totem").onclick = () => {
-      if (!selectedTotemId) {
-        return alert("Selecione um totem na lista para poder excluí-lo.");
-      }
+    return;
+  }
 
-      const totem = totens[selectedTotemId];
-      const name = totem ? (totem.name || totem.storeName || selectedTotemId) : selectedTotemId;
 
-      if (confirm(`Tem certeza que deseja apagar o totem "${name}" permanentemente?`)) {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({
-            type: "delete_totem",
-            totemId: selectedTotemId
-          }));
-        }
-        
-        delete totens[selectedTotemId];
-        resetSelection();
-      }
-    };
+  socket.send(
+    JSON.stringify({
 
-    window.addEventListener("DOMContentLoaded", connectWebSocket);
-  </script>
+      type:"totem_command",
+
+      totemId:
+        selectedTotemId,
+
+      ...payload
+    })
+  );
+}
+
+
+document.getElementById(
+  "saveName"
+).onclick = ()=>{
+
+  sendCommand({
+
+    name:
+      document.getElementById(
+        "name"
+      ).value
+
+  });
+};
+
+
+document.getElementById(
+  "saveMedia"
+).onclick = ()=>{
+
+  sendCommand({
+
+    mediaType:
+      document.getElementById(
+        "mediaType"
+      ).value,
+
+    mediaUrl:
+      document.getElementById(
+        "mediaUrl"
+      ).value
+
+  });
+};
+
+
+document.getElementById(
+  "saveTicker"
+).onclick = ()=>{
+
+  sendCommand({
+
+    tickerText:
+      document.getElementById(
+        "tickerText"
+      ).value,
+
+    tickerIcon:
+      document.getElementById(
+        "tickerIcon"
+      ).value
+
+  });
+};
+
+
+document.getElementById(
+  "saveOrientation"
+).onclick = ()=>{
+
+  sendCommand({
+
+    orientation:
+      document.getElementById(
+        "orientation"
+      ).value
+
+  });
+};
+
+
+document.getElementById(
+  "deleteTotem"
+).onclick = ()=>{
+
+  if(!selectedTotemId){
+    return;
+  }
+
+
+  if(
+    !confirm(
+      "Excluir este totem?"
+    )
+  ){
+    return;
+  }
+
+
+  socket.send(
+    JSON.stringify({
+
+      type:
+        "delete_totem",
+
+      totemId:
+        selectedTotemId
+
+    })
+  );
+
+
+  selectedTotemId = null;
+};
+
+
+function escapeHtml(value){
+
+  return String(value)
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+}
+
+
+connect();
+
+</script>
+
 </body>
+
 </html>
