@@ -1,362 +1,983 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Totem Player</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    html, body {
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background-color: #000;
-      font-family: Arial, sans-serif;
-      user-select: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+<title>Manaus Totem</title>
 
-    #app-container {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.3s ease;
-      position: relative;
-    }
+<style>
+*{
+  box-sizing:border-box;
+}
 
-    /* FORÇAR VERTICAL EM TELAS HORIZONTAIS DE COMPUTADOR (Modo Padrão) */
-    @media (min-width: 768px) and (orientation: landscape) {
-      #app-container {
-        width: 100vh;
-        height: 100vw;
-        transform: rotate(-90deg);
-        transform-origin: center center;
-      }
-    }
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000;
+}
 
-    /* Classe para alterar orientação via comandos do admin */
-    .landscape {
-      transform: rotate(0deg) !important;
-      width: 100vw !important;
-      height: 100vh !important;
-    }
+body{
+  font-family:Arial,sans-serif;
+}
 
-    /* Indicador visual de Conexão no Totem */
-    #connection-status {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      z-index: 9999;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background-color: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      pointer-events: none;
-      transition: all 0.3s ease;
-    }
+#app-container{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:100vw;
+  height:100vh;
+  transform:translate(-50%,-50%);
+  background:#000;
+  overflow:hidden;
+}
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-    }
+#media-display{
+  position:absolute;
+  inset:0 0 60px 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:#000;
+}
 
-    .status-dot.online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-    .status-dot.offline { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+#media-display img,
+#media-display iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  object-fit:contain;
+  display:block;
+}
 
-    #media-display {
-      flex: 1;
-      width: 100%;
-      height: calc(100% - 60px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      position: relative;
-    }
+.video-layer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .18s linear;
+}
 
-    #media-display img, 
-    #media-display video, 
-    #media-display iframe {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border: none;
-    }
+.video-layer.active{
+  opacity:1;
+  visibility:visible;
+}
 
-    #footer-ticker {
-      height: 60px;
-      width: 100%;
-      background-color: #111;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      white-space: nowrap;
-      position: relative;
-      border-top: 2px solid #333;
-    }
+#placeholder{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
 
-    .ticker-content {
-      display: inline-flex;
-      align-items: center;
-      gap: 15px;
-      padding-left: 100%;
-      animation: ticker 15s linear infinite;
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
+#ticker{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:0 20px;
+  background:rgba(0,0,0,.88);
+  color:#fff;
+  font-size:24px;
+  white-space:nowrap;
+  overflow:hidden;
+  z-index:20;
+}
 
-    .ticker-icon {
-      height: 30px;
-      width: auto;
-      vertical-align: middle;
-    }
+#ticker-icon{
+  max-height:34px;
+  max-width:34px;
+}
 
-    @keyframes ticker {
-      0% { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-100%, 0, 0); }
-    }
-  </style>
+#connection{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:#d00;
+  z-index:50;
+  opacity:.85;
+}
+
+#connection.online{
+  background:#19c719;
+}
+
+.landscape{
+  width:100vw!important;
+  height:100vh!important;
+  transform:
+    translate(-50%,-50%)
+    rotate(0deg)!important;
+}
+
+@media (min-width:768px)
+and (orientation:landscape){
+
+  #app-container{
+    width:100vh;
+    height:100vw;
+    transform:
+      translate(-50%,-50%)
+      rotate(-90deg);
+  }
+}
+</style>
 </head>
+
 <body>
 
-  <div id="app-container">
-    <!-- Indicador de Status On-line / Off-line -->
-    <div id="connection-status">
-      <span class="status-dot offline" id="status-dot"></span>
-      <span id="status-text">Offline</span>
-    </div>
+<div id="app-container">
 
-    <div id="media-display">
-      <img id="current-media" src="https://via.placeholder.com/1080x1920?text=Aguardando+Conteudo" alt="Mídia Totem">
-    </div>
+  <div id="connection"></div>
 
-    <div id="footer-ticker">
-      <div class="ticker-content" id="ticker-text">
-        <span>Bem-vindo!</span>
-      </div>
-    </div>
+  <div id="media-display">
+
+    <img
+      id="placeholder"
+      src=""
+      alt=""
+    >
+
+    <img
+      id="image-display"
+      style="display:none"
+      alt=""
+    >
+
+    <iframe
+      id="iframe-display"
+      style="display:none"
+      allow="autoplay; fullscreen">
+    </iframe>
+
+    <video
+      id="video-a"
+      class="video-layer"
+      playsinline
+      preload="auto"
+      muted>
+    </video>
+
+    <video
+      id="video-b"
+      class="video-layer"
+      playsinline
+      preload="auto"
+      muted>
+    </video>
+
   </div>
 
-  <script>
-    const SERVER_URL = "wss://manaustotem.onrender.com";
-    let totemId = localStorage.getItem("totemId");
-    if (!totemId) {
-      totemId = "totem_" + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem("totemId", totemId);
+  <div id="ticker">
+
+    <img
+      id="ticker-icon"
+      style="display:none"
+      alt=""
+    >
+
+    <span id="ticker-text">
+      Bem-vindo!
+    </span>
+
+  </div>
+
+</div>
+
+<script>
+
+const SERVER_URL =
+  "wss://manaustotem.onrender.com";
+
+let socket = null;
+let reconnectTimer = null;
+let pingInterval = null;
+
+let totemId =
+  localStorage.getItem(
+    "manaus_totem_id"
+  );
+
+if(!totemId){
+
+  totemId =
+    "totem_" +
+    Math.random()
+      .toString(36)
+      .substring(2,11);
+
+  localStorage.setItem(
+    "manaus_totem_id",
+    totemId
+  );
+}
+
+const storageKey =
+  "totem_config_" + totemId;
+
+let currentConfig = {
+
+  orientation:"portrait",
+
+  mediaType:"image",
+
+  mediaUrl:"",
+
+  tickerText:"Bem-vindo!",
+
+  tickerIcon:""
+};
+
+let playlist = [];
+
+let currentIndex = 0;
+
+let playbackGeneration = 0;
+
+let imageTimer = null;
+
+
+const app =
+  document.getElementById(
+    "app-container"
+  );
+
+const connection =
+  document.getElementById(
+    "connection"
+  );
+
+const placeholder =
+  document.getElementById(
+    "placeholder"
+  );
+
+const imageDisplay =
+  document.getElementById(
+    "image-display"
+  );
+
+const iframeDisplay =
+  document.getElementById(
+    "iframe-display"
+  );
+
+const videoA =
+  document.getElementById(
+    "video-a"
+  );
+
+const videoB =
+  document.getElementById(
+    "video-b"
+  );
+
+const tickerText =
+  document.getElementById(
+    "ticker-text"
+  );
+
+const tickerIcon =
+  document.getElementById(
+    "ticker-icon"
+  );
+
+
+function setOnline(online){
+
+  connection.classList.toggle(
+    "online",
+    online
+  );
+}
+
+
+function saveLocalState(){
+
+  try{
+
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(
+        currentConfig
+      )
+    );
+
+  }catch(e){}
+}
+
+
+function loadLocalState(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        storageKey
+      );
+
+    if(saved){
+
+      const data =
+        JSON.parse(saved);
+
+      applyDisplayState(
+        data,
+        false
+      );
     }
 
-    let socket;
-    let pingInterval;
+  }catch(e){}
+}
 
-    // Controle de Playlist
-    let playlist = [];
-    let currentPlaylistIndex = 0;
 
-    // Estado local mantido
-    let currentConfig = {
-      orientation: "portrait",
-      mediaType: "image",
-      mediaUrl: "https://via.placeholder.com/1080x1920?text=Aguardando+Conteudo",
-      tickerText: "Bem-vindo!",
-      tickerIcon: ""
+function setOrientation(value){
+
+  app.classList.toggle(
+    "landscape",
+    value === "landscape"
+  );
+}
+
+
+function resetMedia(){
+
+  clearTimeout(
+    imageTimer
+  );
+
+  imageTimer = null;
+
+  imageDisplay.style.display =
+    "none";
+
+  iframeDisplay.style.display =
+    "none";
+
+  placeholder.style.display =
+    "none";
+
+  [videoA,videoB]
+    .forEach(video=>{
+
+      try{
+
+        video.pause();
+
+        video.removeAttribute(
+          "src"
+        );
+
+        video.load();
+
+      }catch(e){}
+
+      video.classList.remove(
+        "active"
+      );
+    });
+}
+
+
+function getPlaylist(url){
+
+  return String(url || "")
+    .split(/[\n,]+/)
+    .map(v=>v.trim())
+    .filter(Boolean);
+}
+
+
+function showImage(
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+  resetMedia();
+
+  imageDisplay.style.display =
+    "block";
+
+  imageDisplay.src =
+    playlist[index];
+
+  imageTimer =
+    setTimeout(()=>{
+
+      if(
+        generation !==
+        playbackGeneration
+      ){
+        return;
+      }
+
+      currentIndex =
+        (currentIndex + 1)
+        % playlist.length;
+
+      showImage(
+        currentIndex,
+        generation
+      );
+
+    },10000);
+}
+
+
+function startVideoPlaylist(
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration ||
+    !playlist.length
+  ){
+    return;
+  }
+
+  currentIndex =
+    Math.max(
+      0,
+      Math.min(
+        currentIndex,
+        playlist.length - 1
+      )
+    );
+
+  resetMedia();
+
+  playVideo(
+    videoA,
+    playlist[currentIndex],
+    generation
+  );
+}
+
+
+function playVideo(
+  video,
+  url,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+  const other =
+    video === videoA
+      ? videoB
+      : videoA;
+
+  video.onended = null;
+  video.onerror = null;
+
+  video.src = url;
+
+  video.muted = true;
+  video.playsInline = true;
+  video.currentTime = 0;
+
+  video.onended = ()=>{
+
+    if(
+      generation !==
+      playbackGeneration
+    ){
+      return;
+    }
+
+    currentIndex =
+      (currentIndex + 1)
+      % playlist.length;
+
+    const nextUrl =
+      playlist[currentIndex];
+
+    other.src = nextUrl;
+    other.muted = true;
+    other.playsInline = true;
+
+    other.onended = null;
+    other.onerror = null;
+
+    const playPromise =
+      other.play();
+
+    if(playPromise){
+
+      playPromise.catch(()=>{
+        setTimeout(()=>{
+          if(
+            generation ===
+            playbackGeneration
+          ){
+            other.play().catch(()=>{});
+          }
+        },300);
+      });
+    }
+
+    video.classList.remove(
+      "active"
+    );
+
+    other.classList.add(
+      "active"
+    );
+
+    video.pause();
+
+    video.removeAttribute(
+      "src"
+    );
+
+    video.load();
+
+    other.onended = ()=>{
+
+      if(
+        generation !==
+        playbackGeneration
+      ){
+        return;
+      }
+
+      currentIndex =
+        (currentIndex + 1)
+        % playlist.length;
+
+      playVideo(
+        other,
+        playlist[currentIndex],
+        generation
+      );
+    };
+  };
+
+
+  video.onerror = ()=>{
+
+    if(
+      generation !==
+      playbackGeneration
+    ){
+      return;
+    }
+
+    currentIndex =
+      (currentIndex + 1)
+      % playlist.length;
+
+    setTimeout(()=>{
+
+      if(
+        generation ===
+        playbackGeneration
+      ){
+
+        playVideo(
+          video,
+          playlist[currentIndex],
+          generation
+        );
+      }
+
+    },300);
+  };
+
+
+  video.classList.add(
+    "active"
+  );
+
+
+  const playPromise =
+    video.play();
+
+  if(playPromise){
+
+    playPromise.catch(()=>{
+
+      setTimeout(()=>{
+
+        if(
+          generation ===
+          playbackGeneration
+        ){
+
+          video.play().catch(()=>{});
+        }
+
+      },300);
+    });
+  }
+}
+
+
+function applyDisplayState(
+  data,
+  save=true
+){
+
+  if(!data){
+    return;
+  }
+
+  if(data.orientation){
+
+    currentConfig.orientation =
+      data.orientation;
+
+    setOrientation(
+      data.orientation
+    );
+  }
+
+  if(
+    data.mediaType !== undefined
+  ){
+
+    currentConfig.mediaType =
+      data.mediaType;
+  }
+
+  if(
+    data.mediaUrl !== undefined
+  ){
+
+    currentConfig.mediaUrl =
+      data.mediaUrl;
+  }
+
+  if(
+    data.tickerText !== undefined
+  ){
+
+    currentConfig.tickerText =
+      data.tickerText;
+  }
+
+  if(
+    data.tickerIcon !== undefined
+  ){
+
+    currentConfig.tickerIcon =
+      data.tickerIcon;
+  }
+
+  tickerText.textContent =
+    currentConfig.tickerText || "";
+
+
+  if(currentConfig.tickerIcon){
+
+    tickerIcon.src =
+      currentConfig.tickerIcon;
+
+    tickerIcon.style.display =
+      "block";
+
+  }else{
+
+    tickerIcon.style.display =
+      "none";
+  }
+
+
+  playlist =
+    getPlaylist(
+      currentConfig.mediaUrl
+    );
+
+  currentIndex = 0;
+
+  playbackGeneration++;
+
+  const generation =
+    playbackGeneration;
+
+  resetMedia();
+
+
+  if(!playlist.length){
+
+    placeholder.style.display =
+      "block";
+
+    placeholder.src = "";
+
+  }else if(
+    currentConfig.mediaType ===
+    "video"
+  ){
+
+    startVideoPlaylist(
+      generation
+    );
+
+  }else if(
+    currentConfig.mediaType ===
+    "iframe"
+  ){
+
+    iframeDisplay.style.display =
+      "block";
+
+    iframeDisplay.src =
+      playlist[0];
+
+  }else{
+
+    showImage(
+      0,
+      generation
+    );
+  }
+
+
+  if(save){
+    saveLocalState();
+  }
+}
+
+
+function connect(){
+
+  if(
+    socket &&
+    (
+      socket.readyState ===
+      WebSocket.OPEN ||
+      socket.readyState ===
+      WebSocket.CONNECTING
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    socket =
+      new WebSocket(
+        SERVER_URL
+      );
+
+  }catch(e){
+
+    scheduleReconnect();
+
+    return;
+  }
+
+
+  socket.onopen = ()=>{
+
+    setOnline(true);
+
+    socket.send(
+      JSON.stringify({
+        type:"register_totem",
+
+        totemId,
+
+        orientation:
+          currentConfig.orientation,
+
+        name:
+          localStorage.getItem(
+            "totem_name"
+          ) || "",
+
+        storeName:
+          localStorage.getItem(
+            "totem_store"
+          ) || ""
+      })
+    );
+
+
+    clearInterval(
+      pingInterval
+    );
+
+    pingInterval =
+      setInterval(()=>{
+
+        if(
+          socket &&
+          socket.readyState ===
+          WebSocket.OPEN
+        ){
+
+          socket.send(
+            JSON.stringify({
+              type:"ping"
+            })
+          );
+        }
+
+      },25000);
+  };
+
+
+  socket.onmessage =
+    event=>{
+
+      try{
+
+        const data =
+          JSON.parse(
+            event.data
+          );
+
+
+        if(
+          data.type === "pong" ||
+          data.type ===
+          "totem_registered"
+        ){
+          return;
+        }
+
+
+        if(
+          data.type ===
+          "totem_state"
+        ){
+
+          applyDisplayState(
+            data,
+            true
+          );
+
+
+          if(
+            data.name !== undefined
+          ){
+
+            localStorage.setItem(
+              "totem_name",
+              data.name || ""
+            );
+          }
+
+
+          if(
+            data.storeName !==
+            undefined
+          ){
+
+            localStorage.setItem(
+              "totem_store",
+              data.storeName || ""
+            );
+          }
+
+          return;
+        }
+
+
+        if(
+          data.type ===
+          "totem_command"
+        ){
+
+          applyDisplayState(
+            data,
+            true
+          );
+        }
+
+      }catch(e){}
     };
 
-    function updateConnectionUI(isOnline) {
-      const dot = document.getElementById("status-dot");
-      const text = document.getElementById("status-text");
 
-      if (isOnline) {
-        dot.className = "status-dot online";
-        text.textContent = "Online";
-      } else {
-        dot.className = "status-dot offline";
-        text.textContent = "Offline";
-      }
-    }
+  socket.onclose = ()=>{
 
-    function saveStateToLocalStorage() {
-      localStorage.setItem(`totem_config_${totemId}`, JSON.stringify(currentConfig));
-    }
+    setOnline(false);
 
-    function loadStateFromLocalStorage() {
-      const saved = localStorage.getItem(`totem_config_${totemId}`);
-      if (saved) {
-        try {
-          currentConfig = JSON.parse(saved);
-          applyDisplayState(currentConfig);
-        } catch (e) {
-          console.error("Erro ao carregar estado local:", e);
-        }
-      }
-    }
+    clearInterval(
+      pingInterval
+    );
 
-    function connectWebSocket() {
-      socket = new WebSocket(SERVER_URL);
+    scheduleReconnect();
+  };
 
-      socket.onopen = () => {
-        console.log("Conectado ao servidor. Totem ID:", totemId);
-        updateConnectionUI(true);
 
-        socket.send(JSON.stringify({
-          type: "register_totem",
-          totemId: totemId,
-          orientation: currentConfig.orientation || "portrait",
-          status: "online"
-        }));
+  socket.onerror = ()=>{
 
-        clearInterval(pingInterval);
-        pingInterval = setInterval(() => {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 25000);
-      };
+    setOnline(false);
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "pong") return;
-          handleServerCommand(data);
-        } catch (e) {
-          console.error("Erro ao processar mensagem:", e);
-        }
-      };
+    try{
+      socket.close();
+    }catch(e){}
+  };
+}
 
-      socket.onclose = () => {
-        console.warn("Conexão perdida. Reconectando em 5 segundos...");
-        updateConnectionUI(false);
-        clearInterval(pingInterval);
-        setTimeout(connectWebSocket, 5000);
-      };
 
-      socket.onerror = (err) => {
-        console.error("Erro no WebSocket:", err);
-        socket.close();
-      };
-    }
+function scheduleReconnect(){
 
-    function playCurrentMedia() {
-      const mediaDisplay = document.getElementById("media-display");
-      if (playlist.length === 0) return;
+  if(reconnectTimer){
+    return;
+  }
 
-      const currentUrl = playlist[currentPlaylistIndex];
-      const type = currentConfig.mediaType || "image";
+  reconnectTimer =
+    setTimeout(()=>{
 
-      if (type === "video") {
-        let video = mediaDisplay.querySelector("video");
-        
-        if (!video) {
-          mediaDisplay.innerHTML = `<video id="active-video" autoplay muted playsinline></video>`;
-          video = document.getElementById("active-video");
-        }
+      reconnectTimer = null;
 
-        video.src = currentUrl;
+      connect();
 
-        video.onended = () => {
-          if (playlist.length > 0) {
-            currentPlaylistIndex = (currentPlaylistIndex + 1) % playlist.length;
-            playCurrentMedia();
-          }
-        };
+    },5000);
+}
 
-        video.onerror = () => {
-          console.error("Erro ao carregar o vídeo:", currentUrl);
-          if (playlist.length > 1) {
-            setTimeout(() => {
-              currentPlaylistIndex = (currentPlaylistIndex + 1) % playlist.length;
-              playCurrentMedia();
-            }, 3000);
-          }
-        };
 
-        video.play().catch(e => console.warn("Autoplay impedido pelo navegador:", e));
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
 
-      } else if (type === "iframe") {
-        mediaDisplay.innerHTML = `<iframe src="${currentUrl}"></iframe>`;
-      } else {
-        mediaDisplay.innerHTML = `<img src="${currentUrl}" alt="Mídia Totem">`;
-      }
-    }
+    loadLocalState();
 
-    function applyDisplayState(data) {
-      const container = document.getElementById("app-container");
-      const tickerText = document.getElementById("ticker-text");
+    connect();
+  }
+);
 
-      // 1. Orientação
-      if (data.orientation) {
-        currentConfig.orientation = data.orientation;
-        if (data.orientation === "landscape") {
-          container.classList.add("landscape");
-        } else {
-          container.classList.remove("landscape");
-        }
-      }
 
-      // 2. Mídia / Playlist
-      if (data.mediaUrl !== undefined) {
-        currentConfig.mediaUrl = data.mediaUrl;
-        currentConfig.mediaType = data.mediaType || "image";
+document.addEventListener(
+  "contextmenu",
+  e=>e.preventDefault()
+);
 
-        const newPlaylist = data.mediaUrl
-          .split(/[\n,]+/)
-          .map(u => u.trim())
-          .filter(u => u.length > 0);
+</script>
 
-        playlist = newPlaylist.length > 0 ? newPlaylist : ["https://via.placeholder.com/1080x1920?text=Sem+Midia"];
-        currentPlaylistIndex = 0;
-
-        playCurrentMedia();
-      }
-
-      // 3. Letreiro
-      if (data.tickerText !== undefined) {
-        currentConfig.tickerText = data.tickerText;
-        currentConfig.tickerIcon = data.tickerIcon || "";
-
-        tickerText.innerHTML = "";
-        if (data.tickerIcon) {
-          const img = document.createElement("img");
-          img.src = data.tickerIcon;
-          img.className = "ticker-icon";
-          img.alt = "ícone";
-          tickerText.appendChild(img);
-        }
-
-        const span = document.createElement("span");
-        span.textContent = data.tickerText;
-        tickerText.appendChild(span);
-      }
-
-      saveStateToLocalStorage();
-    }
-
-    function handleServerCommand(data) {
-      applyDisplayState(data);
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      loadStateFromLocalStorage();
-      connectWebSocket();
-    });
-  </script>
 </body>
 </html>
