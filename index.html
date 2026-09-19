@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
 <title>Manaus Totem</title>
 
 <style>
+
 *{
   box-sizing:border-box;
 }
 
-html,body{
+html,
+body{
   margin:0;
   width:100%;
   height:100%;
@@ -26,119 +31,197 @@ body{
 
 #app-container{
   position:absolute;
+
   left:50%;
   top:50%;
+
   width:100vw;
   height:100vh;
-  transform:translate(-50%,-50%);
+
+  transform:
+    translate(-50%,-50%);
+
   background:#000;
+
   overflow:hidden;
 }
 
 #media-display{
+
   position:absolute;
-  inset:0 0 60px 0;
+
+  inset:
+    0 0 60px 0;
+
   display:flex;
+
   align-items:center;
   justify-content:center;
+
   overflow:hidden;
+
   background:#000;
 }
 
 #media-display img,
 #media-display iframe{
+
   width:100%;
   height:100%;
+
   border:0;
+
   object-fit:contain;
+
   display:block;
 }
 
 .video-layer{
+
   position:absolute;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   object-fit:contain;
+
   background:#000;
+
   opacity:0;
+
   visibility:hidden;
+
   pointer-events:none;
-  transition:opacity .18s linear;
+
+  transition:
+    opacity .18s linear;
 }
 
 .video-layer.active{
+
   opacity:1;
+
   visibility:visible;
 }
 
 #placeholder{
+
   width:100%;
   height:100%;
+
   object-fit:contain;
+
   display:block;
 }
 
 #ticker{
+
   position:absolute;
+
   left:0;
   right:0;
   bottom:0;
+
   height:60px;
+
   display:flex;
+
   align-items:center;
   justify-content:center;
+
   gap:10px;
-  padding:0 20px;
-  background:rgba(0,0,0,.88);
+
+  padding:
+    0 20px;
+
+  background:
+    rgba(0,0,0,.88);
+
   color:#fff;
+
   font-size:24px;
+
   white-space:nowrap;
+
   overflow:hidden;
+
   z-index:20;
 }
 
 #ticker-icon{
+
   max-height:34px;
   max-width:34px;
 }
 
 #connection{
+
   position:absolute;
+
   top:12px;
   right:12px;
+
   width:14px;
   height:14px;
+
   border-radius:50%;
+
   background:#d00;
+
   z-index:50;
+
   opacity:.85;
 }
 
 #connection.online{
+
   background:#19c719;
 }
 
-.landscape{
-  width:100vw!important;
-  height:100vh!important;
-  transform:
-    translate(-50%,-50%)
-    rotate(0deg)!important;
-}
 
-@media (min-width:768px)
+/*
+ * RETRATO PADRÃO
+ *
+ * Em uma tela física paisagem,
+ * o conteúdo é girado para ficar
+ * como um totem vertical.
+ */
+
+@media
+(min-width:768px)
 and (orientation:landscape){
 
   #app-container{
+
     width:100vh;
     height:100vw;
+
     transform:
       translate(-50%,-50%)
       rotate(-90deg);
   }
 }
+
+
+/*
+ * PAISAGEM ENVIADA PELO ADMIN
+ *
+ * Cancela o giro padrão.
+ */
+
+#app-container.landscape{
+
+  width:100vw !important;
+  height:100vh !important;
+
+  transform:
+    translate(-50%,-50%) !important;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -146,6 +229,7 @@ and (orientation:landscape){
 <div id="app-container">
 
   <div id="connection"></div>
+
 
   <div id="media-display">
 
@@ -155,11 +239,13 @@ and (orientation:landscape){
       alt=""
     >
 
+
     <img
       id="image-display"
       style="display:none"
       alt=""
     >
+
 
     <iframe
       id="iframe-display"
@@ -167,23 +253,24 @@ and (orientation:landscape){
       allow="autoplay; fullscreen">
     </iframe>
 
+
     <video
       id="video-a"
       class="video-layer"
       playsinline
-      preload="auto"
-      muted>
+      preload="auto">
     </video>
+
 
     <video
       id="video-b"
       class="video-layer"
       playsinline
-      preload="auto"
-      muted>
+      preload="auto">
     </video>
 
   </div>
+
 
   <div id="ticker">
 
@@ -201,19 +288,25 @@ and (orientation:landscape){
 
 </div>
 
+
 <script>
 
 const SERVER_URL =
   "wss://manaustotem.onrender.com";
 
+
 let socket = null;
+
 let reconnectTimer = null;
+
 let pingInterval = null;
+
 
 let totemId =
   localStorage.getItem(
     "manaus_totem_id"
   );
+
 
 if(!totemId){
 
@@ -223,27 +316,39 @@ if(!totemId){
       .toString(36)
       .substring(2,11);
 
+
   localStorage.setItem(
     "manaus_totem_id",
     totemId
   );
 }
 
+
 const storageKey =
   "totem_config_" + totemId;
 
+
 let currentConfig = {
 
-  orientation:"portrait",
+  orientation:
+    "portrait",
 
-  mediaType:"image",
+  mediaType:
+    "image",
 
-  mediaUrl:"",
+  mediaUrl:
+    "",
 
-  tickerText:"Bem-vindo!",
+  tickerText:
+    "Bem-vindo!",
 
-  tickerIcon:""
+  tickerIcon:
+    "",
+
+  soundEnabled:
+    false
 };
+
 
 let playlist = [];
 
@@ -259,40 +364,48 @@ const app =
     "app-container"
   );
 
+
 const connection =
   document.getElementById(
     "connection"
   );
+
 
 const placeholder =
   document.getElementById(
     "placeholder"
   );
 
+
 const imageDisplay =
   document.getElementById(
     "image-display"
   );
+
 
 const iframeDisplay =
   document.getElementById(
     "iframe-display"
   );
 
+
 const videoA =
   document.getElementById(
     "video-a"
   );
+
 
 const videoB =
   document.getElementById(
     "video-b"
   );
 
+
 const tickerText =
   document.getElementById(
     "ticker-text"
   );
+
 
 const tickerIcon =
   document.getElementById(
@@ -333,10 +446,14 @@ function loadLocalState(){
         storageKey
       );
 
+
     if(saved){
 
       const data =
-        JSON.parse(saved);
+        JSON.parse(
+          saved
+        );
+
 
       applyDisplayState(
         data,
@@ -348,7 +465,9 @@ function loadLocalState(){
 }
 
 
-function setOrientation(value){
+function setOrientation(
+  value
+){
 
   app.classList.toggle(
     "landscape",
@@ -365,14 +484,18 @@ function resetMedia(){
 
   imageTimer = null;
 
+
   imageDisplay.style.display =
     "none";
+
 
   iframeDisplay.style.display =
     "none";
 
+
   placeholder.style.display =
     "none";
+
 
   [videoA,videoB]
     .forEach(video=>{
@@ -389,21 +512,67 @@ function resetMedia(){
 
       }catch(e){}
 
+
       video.classList.remove(
         "active"
       );
+
+      video.onended =
+        null;
+
+      video.onerror =
+        null;
+
     });
 }
 
 
-function getPlaylist(url){
+function getPlaylist(
+  url
+){
 
-  return String(url || "")
-    .split(/[\n,]+/)
-    .map(v=>v.trim())
-    .filter(Boolean);
+  return String(
+    url || ""
+  )
+
+  .split(/[\n,]+/)
+
+  .map(
+    v => v.trim()
+  )
+
+  .filter(Boolean);
 }
 
+
+/*
+ * Identifica se uma URL é vídeo.
+ */
+
+function isVideoUrl(
+  url
+){
+
+  const clean =
+    String(url || "")
+      .split("?")[0]
+      .split("#")[0]
+      .toLowerCase();
+
+
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".ogg") ||
+    clean.endsWith(".mov") ||
+    clean.endsWith(".m4v")
+  );
+}
+
+
+/*
+ * IMAGEM
+ */
 
 function showImage(
   index,
@@ -417,16 +586,116 @@ function showImage(
     return;
   }
 
+
   resetMedia();
+
 
   imageDisplay.style.display =
     "block";
 
+
   imageDisplay.src =
     playlist[index];
 
+
   imageTimer =
-    setTimeout(()=>{
+    setTimeout(
+      ()=>{
+
+        if(
+          generation !==
+          playbackGeneration
+        ){
+          return;
+        }
+
+
+        currentIndex =
+          (
+            currentIndex + 1
+          ) % playlist.length;
+
+
+        playMixedItem(
+          currentIndex,
+          generation
+        );
+
+      },
+      10000
+    );
+}
+
+
+/*
+ * VÍDEO
+ */
+
+function playVideoItem(
+  video,
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+
+  if(
+    !playlist.length
+  ){
+    return;
+  }
+
+
+  const url =
+    playlist[index];
+
+
+  const other =
+    video === videoA
+      ? videoB
+      : videoA;
+
+
+  video.onended =
+    null;
+
+  video.onerror =
+    null;
+
+
+  video.src =
+    url;
+
+
+  video.playsInline =
+    true;
+
+
+  video.muted =
+    !currentConfig.soundEnabled;
+
+
+  video.volume =
+    1;
+
+
+  video.currentTime =
+    0;
+
+
+  video.classList.add(
+    "active"
+  );
+
+
+  const advance =
+    ()=>{
 
       if(
         generation !==
@@ -435,18 +704,181 @@ function showImage(
         return;
       }
 
-      currentIndex =
-        (currentIndex + 1)
-        % playlist.length;
 
-      showImage(
+      currentIndex =
+        (
+          currentIndex + 1
+        ) % playlist.length;
+
+
+      video.classList.remove(
+        "active"
+      );
+
+
+      video.pause();
+
+      video.removeAttribute(
+        "src"
+      );
+
+      video.load();
+
+
+      playMixedItem(
         currentIndex,
         generation
       );
+    };
 
-    },10000);
+
+  video.onended =
+    advance;
+
+
+  video.onerror =
+    ()=>{
+
+      if(
+        generation !==
+        playbackGeneration
+      ){
+        return;
+      }
+
+
+      setTimeout(
+        ()=>{
+
+          if(
+            generation ===
+            playbackGeneration
+          ){
+
+            advance();
+          }
+
+        },
+        300
+      );
+    };
+
+
+  const promise =
+    video.play();
+
+
+  if(promise){
+
+    promise.catch(
+      ()=>{
+
+        /*
+         * Segunda tentativa.
+         */
+
+        setTimeout(
+          ()=>{
+
+            if(
+              generation ===
+              playbackGeneration
+            ){
+
+              video.muted =
+                !currentConfig
+                  .soundEnabled;
+
+              video.play()
+                .catch(()=>{});
+            }
+
+          },
+          500
+        );
+
+      }
+    );
+  }
 }
 
+
+/*
+ * PLAYLIST MISTA
+ *
+ * Pode ser:
+ *
+ * imagem
+ * vídeo
+ * imagem
+ * vídeo
+ * vídeo
+ * imagem
+ *
+ * Tudo na mesma playlist.
+ */
+
+function playMixedItem(
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+
+  if(
+    !playlist.length
+  ){
+    return;
+  }
+
+
+  currentIndex =
+    index %
+    playlist.length;
+
+
+  const url =
+    playlist[currentIndex];
+
+
+  if(
+    isVideoUrl(url)
+  ){
+
+    const video =
+      currentIndex % 2 === 0
+        ? videoA
+        : videoB;
+
+
+    resetMedia();
+
+
+    playVideoItem(
+      video,
+      currentIndex,
+      generation
+    );
+
+  }else{
+
+    showImage(
+      currentIndex,
+      generation
+    );
+  }
+}
+
+
+/*
+ * PLAYLIST SOMENTE VÍDEO
+ */
 
 function startVideoPlaylist(
   generation
@@ -460,6 +892,7 @@ function startVideoPlaylist(
     return;
   }
 
+
   currentIndex =
     Math.max(
       0,
@@ -469,179 +902,17 @@ function startVideoPlaylist(
       )
     );
 
-  resetMedia();
 
-  playVideo(
-    videoA,
-    playlist[currentIndex],
+  playMixedItem(
+    currentIndex,
     generation
   );
 }
 
 
-function playVideo(
-  video,
-  url,
-  generation
-){
-
-  if(
-    generation !==
-    playbackGeneration
-  ){
-    return;
-  }
-
-  const other =
-    video === videoA
-      ? videoB
-      : videoA;
-
-  video.onended = null;
-  video.onerror = null;
-
-  video.src = url;
-
-  video.muted = true;
-  video.playsInline = true;
-  video.currentTime = 0;
-
-  video.onended = ()=>{
-
-    if(
-      generation !==
-      playbackGeneration
-    ){
-      return;
-    }
-
-    currentIndex =
-      (currentIndex + 1)
-      % playlist.length;
-
-    const nextUrl =
-      playlist[currentIndex];
-
-    other.src = nextUrl;
-    other.muted = true;
-    other.playsInline = true;
-
-    other.onended = null;
-    other.onerror = null;
-
-    const playPromise =
-      other.play();
-
-    if(playPromise){
-
-      playPromise.catch(()=>{
-        setTimeout(()=>{
-          if(
-            generation ===
-            playbackGeneration
-          ){
-            other.play().catch(()=>{});
-          }
-        },300);
-      });
-    }
-
-    video.classList.remove(
-      "active"
-    );
-
-    other.classList.add(
-      "active"
-    );
-
-    video.pause();
-
-    video.removeAttribute(
-      "src"
-    );
-
-    video.load();
-
-    other.onended = ()=>{
-
-      if(
-        generation !==
-        playbackGeneration
-      ){
-        return;
-      }
-
-      currentIndex =
-        (currentIndex + 1)
-        % playlist.length;
-
-      playVideo(
-        other,
-        playlist[currentIndex],
-        generation
-      );
-    };
-  };
-
-
-  video.onerror = ()=>{
-
-    if(
-      generation !==
-      playbackGeneration
-    ){
-      return;
-    }
-
-    currentIndex =
-      (currentIndex + 1)
-      % playlist.length;
-
-    setTimeout(()=>{
-
-      if(
-        generation ===
-        playbackGeneration
-      ){
-
-        playVideo(
-          video,
-          playlist[currentIndex],
-          generation
-        );
-      }
-
-    },300);
-  };
-
-
-  video.classList.add(
-    "active"
-  );
-
-
-  const playPromise =
-    video.play();
-
-  if(playPromise){
-
-    playPromise.catch(()=>{
-
-      setTimeout(()=>{
-
-        if(
-          generation ===
-          playbackGeneration
-        ){
-
-          video.play().catch(()=>{});
-        }
-
-      },300);
-    });
-  }
-}
-
+/*
+ * APLICA TODA A CONFIGURAÇÃO
+ */
 
 function applyDisplayState(
   data,
@@ -652,53 +923,79 @@ function applyDisplayState(
     return;
   }
 
-  if(data.orientation){
+
+  if(
+    data.orientation
+  ){
 
     currentConfig.orientation =
       data.orientation;
+
 
     setOrientation(
       data.orientation
     );
   }
 
+
   if(
-    data.mediaType !== undefined
+    data.mediaType !==
+    undefined
   ){
 
     currentConfig.mediaType =
       data.mediaType;
   }
 
+
   if(
-    data.mediaUrl !== undefined
+    data.mediaUrl !==
+    undefined
   ){
 
     currentConfig.mediaUrl =
       data.mediaUrl;
   }
 
+
   if(
-    data.tickerText !== undefined
+    data.tickerText !==
+    undefined
   ){
 
     currentConfig.tickerText =
       data.tickerText;
   }
 
+
   if(
-    data.tickerIcon !== undefined
+    data.tickerIcon !==
+    undefined
   ){
 
     currentConfig.tickerIcon =
       data.tickerIcon;
   }
 
+
+  if(
+    data.soundEnabled !==
+    undefined
+  ){
+
+    currentConfig.soundEnabled =
+      data.soundEnabled === true;
+  }
+
+
   tickerText.textContent =
-    currentConfig.tickerText || "";
+    currentConfig.tickerText ||
+    "";
 
 
-  if(currentConfig.tickerIcon){
+  if(
+    currentConfig.tickerIcon
+  ){
 
     tickerIcon.src =
       currentConfig.tickerIcon;
@@ -718,31 +1015,30 @@ function applyDisplayState(
       currentConfig.mediaUrl
     );
 
-  currentIndex = 0;
+
+  currentIndex =
+    0;
+
 
   playbackGeneration++;
+
 
   const generation =
     playbackGeneration;
 
+
   resetMedia();
 
 
-  if(!playlist.length){
+  if(
+    !playlist.length
+  ){
 
     placeholder.style.display =
       "block";
 
     placeholder.src = "";
 
-  }else if(
-    currentConfig.mediaType ===
-    "video"
-  ){
-
-    startVideoPlaylist(
-      generation
-    );
 
   }else if(
     currentConfig.mediaType ===
@@ -752,8 +1048,31 @@ function applyDisplayState(
     iframeDisplay.style.display =
       "block";
 
+
     iframeDisplay.src =
       playlist[0];
+
+
+  }else if(
+    currentConfig.mediaType ===
+      "mixed"
+  ){
+
+    playMixedItem(
+      0,
+      generation
+    );
+
+
+  }else if(
+    currentConfig.mediaType ===
+      "video"
+  ){
+
+    startVideoPlaylist(
+      generation
+    );
+
 
   }else{
 
@@ -765,10 +1084,15 @@ function applyDisplayState(
 
 
   if(save){
+
     saveLocalState();
   }
 }
 
+
+/*
+ * CONEXÃO
+ */
 
 function connect(){
 
@@ -776,13 +1100,15 @@ function connect(){
     socket &&
     (
       socket.readyState ===
-      WebSocket.OPEN ||
+        WebSocket.OPEN ||
       socket.readyState ===
-      WebSocket.CONNECTING
+        WebSocket.CONNECTING
     )
   ){
+
     return;
   }
+
 
   try{
 
@@ -799,54 +1125,62 @@ function connect(){
   }
 
 
-  socket.onopen = ()=>{
+  socket.onopen =
+    ()=>{
 
-    setOnline(true);
-
-    socket.send(
-      JSON.stringify({
-        type:"register_totem",
-
-        totemId,
-
-        orientation:
-          currentConfig.orientation,
-
-        name:
-          localStorage.getItem(
-            "totem_name"
-          ) || "",
-
-        storeName:
-          localStorage.getItem(
-            "totem_store"
-          ) || ""
-      })
-    );
+      setOnline(true);
 
 
-    clearInterval(
-      pingInterval
-    );
+      socket.send(
+        JSON.stringify({
 
-    pingInterval =
-      setInterval(()=>{
+          type:
+            "register_totem",
 
-        if(
-          socket &&
-          socket.readyState ===
-          WebSocket.OPEN
-        ){
+          totemId,
 
-          socket.send(
-            JSON.stringify({
-              type:"ping"
-            })
-          );
-        }
+          orientation:
+            currentConfig.orientation,
 
-      },25000);
-  };
+          name:
+            localStorage.getItem(
+              "totem_name"
+            ) || "",
+
+          storeName:
+            localStorage.getItem(
+              "totem_store"
+            ) || ""
+        })
+      );
+
+
+      clearInterval(
+        pingInterval
+      );
+
+
+      pingInterval =
+        setInterval(
+          ()=>{
+
+            if(
+              socket &&
+              socket.readyState ===
+                WebSocket.OPEN
+            ){
+
+              socket.send(
+                JSON.stringify({
+                  type:"ping"
+                })
+              );
+            }
+
+          },
+          25000
+        );
+    };
 
 
   socket.onmessage =
@@ -861,10 +1195,12 @@ function connect(){
 
 
         if(
-          data.type === "pong" ||
           data.type ===
-          "totem_registered"
+            "pong" ||
+          data.type ===
+            "totem_registered"
         ){
+
           return;
         }
 
@@ -881,7 +1217,8 @@ function connect(){
 
 
           if(
-            data.name !== undefined
+            data.name !==
+            undefined
           ){
 
             localStorage.setItem(
@@ -902,6 +1239,7 @@ function connect(){
             );
           }
 
+
           return;
         }
 
@@ -917,47 +1255,63 @@ function connect(){
           );
         }
 
+
       }catch(e){}
     };
 
 
-  socket.onclose = ()=>{
+  socket.onclose =
+    ()=>{
 
-    setOnline(false);
-
-    clearInterval(
-      pingInterval
-    );
-
-    scheduleReconnect();
-  };
+      setOnline(false);
 
 
-  socket.onerror = ()=>{
+      clearInterval(
+        pingInterval
+      );
 
-    setOnline(false);
 
-    try{
-      socket.close();
-    }catch(e){}
-  };
+      scheduleReconnect();
+    };
+
+
+  socket.onerror =
+    ()=>{
+
+      setOnline(false);
+
+
+      try{
+
+        socket.close();
+
+      }catch(e){}
+    };
 }
 
 
 function scheduleReconnect(){
 
-  if(reconnectTimer){
+  if(
+    reconnectTimer
+  ){
+
     return;
   }
 
+
   reconnectTimer =
-    setTimeout(()=>{
+    setTimeout(
+      ()=>{
 
-      reconnectTimer = null;
+        reconnectTimer =
+          null;
 
-      connect();
+        connect();
 
-    },5000);
+      },
+      5000
+    );
 }
 
 
@@ -974,7 +1328,8 @@ document.addEventListener(
 
 document.addEventListener(
   "contextmenu",
-  e=>e.preventDefault()
+  e =>
+    e.preventDefault()
 );
 
 </script>
