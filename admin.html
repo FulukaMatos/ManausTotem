@@ -18,22 +18,33 @@
 
 body{
   margin:0;
-  font-family:Arial,sans-serif;
+
+  font-family:
+    Arial,sans-serif;
+
   background:#f2f2f2;
+
   color:#222;
 }
 
 .layout{
   display:flex;
+
   height:100vh;
+
   overflow:hidden;
 }
 
 .sidebar{
+
   width:320px;
+
   background:#151515;
+
   color:#fff;
+
   padding:18px;
+
   overflow:auto;
 }
 
@@ -42,16 +53,23 @@ body{
 }
 
 .status{
+
   font-size:13px;
+
   margin-bottom:15px;
 }
 
 .dot{
+
   display:inline-block;
+
   width:10px;
   height:10px;
+
   border-radius:50%;
+
   background:#d00;
+
   margin-right:6px;
 }
 
@@ -60,79 +78,153 @@ body{
 }
 
 .totem-item{
+
   padding:12px;
+
   border-radius:8px;
+
   background:#242424;
+
   margin-bottom:8px;
+
   cursor:pointer;
 }
 
 .totem-item.selected{
-  outline:2px solid #fff;
+
+  outline:
+    2px solid #fff;
 }
 
 .totem-item small{
+
   display:block;
+
   color:#bbb;
+
   margin-top:5px;
 }
 
 .main{
+
   flex:1;
+
   padding:25px;
+
   overflow:auto;
 }
 
 .card{
+
   background:#fff;
+
   border-radius:10px;
+
   padding:20px;
+
   max-width:850px;
 }
 
 label{
+
   display:block;
+
   font-weight:bold;
-  margin:15px 0 6px;
+
+  margin:
+    15px 0 6px;
 }
 
 input,
 textarea,
 select{
+
   width:100%;
+
   padding:10px;
-  border:1px solid #ccc;
+
+  border:
+    1px solid #ccc;
+
   border-radius:6px;
+
   font-size:15px;
 }
 
 textarea{
+
   min-height:130px;
+
   resize:vertical;
 }
 
 button{
-  padding:10px 16px;
+
+  padding:
+    10px 16px;
+
   border:0;
+
   border-radius:6px;
+
   cursor:pointer;
-  margin:8px 6px 0 0;
+
+  margin:
+    8px 6px 0 0;
 }
 
 .save{
+
   background:#1683ff;
+
   color:#fff;
 }
 
 .delete{
+
   background:#d33;
+
   color:#fff;
 }
 
 .row{
+
   display:flex;
+
   gap:10px;
+
   flex-wrap:wrap;
+}
+
+.sound-box{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  margin-top:8px;
+}
+
+.sound-box input{
+
+  width:auto;
+}
+
+.offline-note{
+
+  margin-top:10px;
+
+  padding:10px;
+
+  border-radius:6px;
+
+  background:#f4f4f4;
+
+  font-size:13px;
+
+  color:#555;
 }
 
 </style>
@@ -143,20 +235,25 @@ button{
 
 <div class="layout">
 
+
 <aside class="sidebar">
 
 <h2>Manaus Totem</h2>
 
+
 <div class="status">
 
-<span id="statusDot"
-      class="dot"></span>
+<span
+  id="statusDot"
+  class="dot">
+</span>
 
 <span id="statusText">
 Desconectado
 </span>
 
 </div>
+
 
 <div id="totemList"></div>
 
@@ -167,7 +264,10 @@ Desconectado
 
 <div class="card">
 
-<h2>Configuração do Totem</h2>
+<h2>
+Configuração do Totem
+</h2>
+
 
 <p id="selectedInfo">
 Selecione um totem.
@@ -193,6 +293,10 @@ Imagem
 
 <option value="video">
 Vídeo
+</option>
+
+<option value="mixed">
+Misto — imagem + vídeo
 </option>
 
 <option value="iframe">
@@ -243,6 +347,31 @@ Paisagem
 </select>
 
 
+<label>
+Som
+</label>
+
+
+<div class="sound-box">
+
+<input
+  type="checkbox"
+  id="soundEnabled">
+
+<span>
+Permitir som nos vídeos
+</span>
+
+</div>
+
+
+<div class="offline-note">
+As alterações ficam salvas no banco mesmo
+quando o totem estiver offline. Quando ele
+for ligado novamente, receberá a configuração.
+</div>
+
+
 <div class="row">
 
 <button
@@ -251,11 +380,13 @@ Paisagem
 Salvar nome
 </button>
 
+
 <button
   class="save"
   id="saveMedia">
 Salvar mídia
 </button>
+
 
 <button
   class="save"
@@ -263,11 +394,20 @@ Salvar mídia
 Salvar letreiro
 </button>
 
+
 <button
   class="save"
   id="saveOrientation">
 Salvar orientação
 </button>
+
+
+<button
+  class="save"
+  id="saveSound">
+Salvar som
+</button>
+
 
 <button
   class="delete"
@@ -289,6 +429,7 @@ Excluir totem
 const SERVER_URL =
   "wss://manaustotem.onrender.com";
 
+
 let socket = null;
 
 let reconnectTimer = null;
@@ -303,10 +444,12 @@ const statusDot =
     "statusDot"
   );
 
+
 const statusText =
   document.getElementById(
     "statusText"
   );
+
 
 const list =
   document.getElementById(
@@ -314,12 +457,15 @@ const list =
   );
 
 
-function setStatus(online){
+function setStatus(
+  online
+){
 
   statusDot.classList.toggle(
     "online",
     online
   );
+
 
   statusText.textContent =
     online
@@ -334,11 +480,12 @@ function connect(){
     socket &&
     (
       socket.readyState ===
-      WebSocket.OPEN ||
+        WebSocket.OPEN ||
       socket.readyState ===
-      WebSocket.CONNECTING
+        WebSocket.CONNECTING
     )
   ){
+
     return;
   }
 
@@ -349,16 +496,20 @@ function connect(){
     );
 
 
-  socket.onopen = ()=>{
+  socket.onopen =
+    ()=>{
 
-    setStatus(true);
+      setStatus(true);
 
-    socket.send(
-      JSON.stringify({
-        type:"register_admin"
-      })
-    );
-  };
+
+      socket.send(
+        JSON.stringify({
+
+          type:
+            "register_admin"
+        })
+      );
+    };
 
 
   socket.onmessage =
@@ -380,12 +531,21 @@ function connect(){
           totems =
             data.totems || {};
 
+
           renderList();
 
 
+          /*
+           * Se o totem estiver offline,
+           * continua selecionado e
+           * continua editável.
+           */
+
           if(
             selectedTotemId &&
-            totems[selectedTotemId]
+            totems[
+              selectedTotemId
+            ]
           ){
 
             populateForm(
@@ -396,43 +556,57 @@ function connect(){
           }
         }
 
+
       }catch(e){}
     };
 
 
-  socket.onclose = ()=>{
+  socket.onclose =
+    ()=>{
 
-    setStatus(false);
+      setStatus(false);
 
-    scheduleReconnect();
-  };
+      scheduleReconnect();
+    };
 
 
-  socket.onerror = ()=>{
+  socket.onerror =
+    ()=>{
 
-    setStatus(false);
+      setStatus(false);
 
-    try{
-      socket.close();
-    }catch(e){}
-  };
+
+      try{
+
+        socket.close();
+
+      }catch(e){}
+    };
 }
 
 
 function scheduleReconnect(){
 
-  if(reconnectTimer){
+  if(
+    reconnectTimer
+  ){
+
     return;
   }
 
+
   reconnectTimer =
-    setTimeout(()=>{
+    setTimeout(
+      ()=>{
 
-      reconnectTimer = null;
+        reconnectTimer =
+          null;
 
-      connect();
+        connect();
 
-    },3000);
+      },
+      3000
+    );
 }
 
 
@@ -441,13 +615,31 @@ function renderList(){
   list.innerHTML = "";
 
 
-  Object.values(totems)
-    .forEach(t=>{
+  const items =
+    Object.values(
+      totems
+    );
+
+
+  if(
+    !items.length
+  ){
+
+    list.innerHTML =
+      "<small>Nenhum totem cadastrado ainda.</small>";
+
+    return;
+  }
+
+
+  items.forEach(
+    t=>{
 
       const item =
         document.createElement(
           "div"
         );
+
 
       item.className =
         "totem-item" +
@@ -463,7 +655,9 @@ function renderList(){
 
         <strong>
           ${escapeHtml(
-            t.name || t.id
+            t.name ||
+            t.storeName ||
+            t.id
           )}
         </strong>
 
@@ -475,26 +669,38 @@ function renderList(){
           }
         </small>
 
+        <small>
+          ID: ${escapeHtml(t.id)}
+        </small>
+
       `;
 
 
-      item.onclick = ()=>{
+      item.onclick =
+        ()=>{
 
-        selectedTotemId =
-          t.id;
-
-        renderList();
-
-        populateForm(t);
-      };
+          selectedTotemId =
+            t.id;
 
 
-      list.appendChild(item);
-    });
+          renderList();
+
+
+          populateForm(t);
+        };
+
+
+      list.appendChild(
+        item
+      );
+    }
+  );
 }
 
 
-function populateForm(t){
+function populateForm(
+  t
+){
 
   document.getElementById(
     "selectedInfo"
@@ -547,12 +753,22 @@ function populateForm(t){
   ).value =
     t.orientation ||
     "portrait";
+
+
+  document.getElementById(
+    "soundEnabled"
+  ).checked =
+    t.soundEnabled === true;
 }
 
 
-function sendCommand(payload){
+function sendCommand(
+  payload
+){
 
-  if(!selectedTotemId){
+  if(
+    !selectedTotemId
+  ){
 
     alert(
       "Selecione um totem."
@@ -565,7 +781,7 @@ function sendCommand(payload){
   if(
     !socket ||
     socket.readyState !==
-    WebSocket.OPEN
+      WebSocket.OPEN
   ){
 
     alert(
@@ -579,123 +795,183 @@ function sendCommand(payload){
   socket.send(
     JSON.stringify({
 
-      type:"totem_command",
+      type:
+        "totem_command",
 
       totemId:
         selectedTotemId,
 
       ...payload
+
     })
   );
 }
 
 
+/*
+ * NOME
+ */
+
 document.getElementById(
   "saveName"
-).onclick = ()=>{
+).onclick =
+  ()=>{
 
-  sendCommand({
+    sendCommand({
 
-    name:
-      document.getElementById(
-        "name"
-      ).value
+      name:
+        document.getElementById(
+          "name"
+        ).value
 
-  });
-};
+    });
+  };
 
+
+/*
+ * MÍDIA
+ */
 
 document.getElementById(
   "saveMedia"
-).onclick = ()=>{
+).onclick =
+  ()=>{
 
-  sendCommand({
+    sendCommand({
 
-    mediaType:
-      document.getElementById(
-        "mediaType"
-      ).value,
+      mediaType:
+        document.getElementById(
+          "mediaType"
+        ).value,
 
-    mediaUrl:
-      document.getElementById(
-        "mediaUrl"
-      ).value
+      mediaUrl:
+        document.getElementById(
+          "mediaUrl"
+        ).value
 
-  });
-};
+    });
+  };
 
+
+/*
+ * LETREIRO
+ */
 
 document.getElementById(
   "saveTicker"
-).onclick = ()=>{
+).onclick =
+  ()=>{
 
-  sendCommand({
+    sendCommand({
 
-    tickerText:
-      document.getElementById(
-        "tickerText"
-      ).value,
+      tickerText:
+        document.getElementById(
+          "tickerText"
+        ).value,
 
-    tickerIcon:
-      document.getElementById(
-        "tickerIcon"
-      ).value
+      tickerIcon:
+        document.getElementById(
+          "tickerIcon"
+        ).value
 
-  });
-};
+    });
+  };
 
+
+/*
+ * ORIENTAÇÃO
+ */
 
 document.getElementById(
   "saveOrientation"
-).onclick = ()=>{
+).onclick =
+  ()=>{
 
-  sendCommand({
+    sendCommand({
 
-    orientation:
-      document.getElementById(
-        "orientation"
-      ).value
+      orientation:
+        document.getElementById(
+          "orientation"
+        ).value
 
-  });
-};
+    });
+  };
 
+
+/*
+ * SOM
+ */
+
+document.getElementById(
+  "saveSound"
+).onclick =
+  ()=>{
+
+    sendCommand({
+
+      soundEnabled:
+        document.getElementById(
+          "soundEnabled"
+        ).checked
+
+    });
+  };
+
+
+/*
+ * EXCLUIR
+ */
 
 document.getElementById(
   "deleteTotem"
-).onclick = ()=>{
+).onclick =
+  ()=>{
 
-  if(!selectedTotemId){
-    return;
-  }
+    if(
+      !selectedTotemId
+    ){
 
-
-  if(
-    !confirm(
-      "Excluir este totem?"
-    )
-  ){
-    return;
-  }
+      return;
+    }
 
 
-  socket.send(
-    JSON.stringify({
+    if(
+      !confirm(
+        "Excluir este totem?"
+      )
+    ){
 
-      type:
-        "delete_totem",
-
-      totemId:
-        selectedTotemId
-
-    })
-  );
+      return;
+    }
 
 
-  selectedTotemId = null;
-};
+    socket.send(
+      JSON.stringify({
+
+        type:
+          "delete_totem",
+
+        totemId:
+          selectedTotemId
+
+      })
+    );
 
 
-function escapeHtml(value){
+    selectedTotemId =
+      null;
+
+
+    document.getElementById(
+      "selectedInfo"
+    ).textContent =
+      "Selecione um totem.";
+  };
+
+
+function escapeHtml(
+  value
+){
 
   return String(value)
 
