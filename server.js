@@ -27,28 +27,76 @@ async function loadDatabase() {
     totems = dados.totens || {};
 
     Object.keys(totems).forEach(id => {
-      totems[id].online = false;
-      totems[id].ws = null;
-      totems[id].lastCommands =
-        totems[id].lastCommands || {};
+
+      const t = totems[id];
+
+      t.id = id;
+
+      t.online = false;
+      t.ws = null;
+
+      t.name = t.name || "";
+      t.storeName = t.storeName || "";
+
+      t.configured =
+        t.configured !== false;
+
+      t.orientation =
+        t.orientation || "portrait";
+
+      t.mediaType =
+        t.mediaType || "image";
+
+      t.mediaUrl =
+        t.mediaUrl || "";
+
+      t.tickerText =
+        t.tickerText || "Bem-vindo!";
+
+      t.tickerIcon =
+        t.tickerIcon || "";
+
+      t.soundEnabled =
+        t.soundEnabled === true;
+
+      t.lastCommands =
+        t.lastCommands || {};
     });
 
-    console.log("Banco carregado do Google Drive.");
+    console.log(
+      `Banco carregado do Google Drive. Totens: ${Object.keys(totems).length}`
+    );
+
   } catch (erro) {
-    console.error("Erro ao carregar banco:", erro);
+
+    console.error(
+      "Erro ao carregar banco:",
+      erro
+    );
+
     totems = {};
   }
 }
 
+
 function saveDatabase() {
+
   saveQueue = saveQueue.then(async () => {
+
     try {
+
       const dados = {
         totens: {}
       };
 
       Object.keys(totems).forEach(id => {
-        const t = { ...totems[id] };
+
+        const original =
+          totems[id];
+
+        const t = {
+          ...original
+        };
 
         delete t.ws;
         delete t.online;
@@ -56,507 +104,1016 @@ function saveDatabase() {
         dados.totens[id] = t;
       });
 
-      const resposta = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(dados)
-      });
+      const resposta =
+        await fetch(
+          APPS_SCRIPT_URL,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(dados)
+          }
+        );
 
       if (!resposta.ok) {
-        throw new Error(`HTTP ${resposta.status}`);
+        throw new Error(
+          `HTTP ${resposta.status}`
+        );
       }
 
-      console.log("Banco salvo no Google Drive.");
+      console.log(
+        "Banco salvo no Google Drive."
+      );
+
     } catch (erro) {
-      console.error("Erro ao salvar banco:", erro);
+
+      console.error(
+        "Erro ao salvar banco:",
+        erro
+      );
     }
+
   });
 
   return saveQueue;
 }
 
+
 function generateUniqueId() {
-  return "totem_" +
-    Math.random().toString(36).substring(2, 11);
+
+  return (
+    "totem_" +
+    Math.random()
+      .toString(36)
+      .substring(2, 11)
+  );
 }
 
+
 function buildTotemList() {
+
   const lista = {};
 
   Object.keys(totems).forEach(id => {
-    const t = totems[id];
+
+    const t =
+      totems[id];
 
     lista[id] = {
+
       id,
-      name: t.name || "",
-      storeName: t.storeName || "",
-      configured: !!t.configured,
-      online: !!t.online,
-      orientation: t.orientation || "portrait",
-      mediaType: t.mediaType || "image",
-      mediaUrl: t.mediaUrl || "",
-      tickerText: t.tickerText || "",
-      tickerIcon: t.tickerIcon || "",
-      lastCommands: t.lastCommands || {}
+
+      name:
+        t.name || "",
+
+      storeName:
+        t.storeName || "",
+
+      configured:
+        !!t.configured,
+
+      online:
+        !!t.online,
+
+      orientation:
+        t.orientation ||
+        "portrait",
+
+      mediaType:
+        t.mediaType ||
+        "image",
+
+      mediaUrl:
+        t.mediaUrl ||
+        "",
+
+      tickerText:
+        t.tickerText ||
+        "Bem-vindo!",
+
+      tickerIcon:
+        t.tickerIcon ||
+        "",
+
+      soundEnabled:
+        t.soundEnabled === true,
+
+      lastCommands:
+        t.lastCommands || {}
     };
   });
 
   return lista;
 }
 
+
 function notifyAdminTotemList() {
-  const mensagem = JSON.stringify({
-    type: "totem_list",
-    totems: buildTotemList()
-  });
+
+  const mensagem =
+    JSON.stringify({
+
+      type:
+        "totem_list",
+
+      totems:
+        buildTotemList()
+    });
+
 
   adminSockets.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) {
+
+    if (
+      ws.readyState ===
+      WebSocket.OPEN
+    ) {
+
       ws.send(mensagem);
     }
+
   });
 }
 
-function sendCanonicalState(ws, t) {
-  ws.send(JSON.stringify({
-    type: "totem_state",
-    totemId: t.id,
-    name: t.name || "",
-    storeName: t.storeName || "",
-    configured: !!t.configured,
-    orientation: t.orientation || "portrait",
-    mediaType: t.mediaType || "image",
-    mediaUrl: t.mediaUrl || "",
-    tickerText: t.tickerText || "Bem-vindo!",
-    tickerIcon: t.tickerIcon || ""
-  }));
+
+function sendCanonicalState(
+  ws,
+  t
+) {
+
+  if (
+    !ws ||
+    ws.readyState !==
+    WebSocket.OPEN
+  ) {
+    return;
+  }
+
+  ws.send(
+    JSON.stringify({
+
+      type:
+        "totem_state",
+
+      totemId:
+        t.id,
+
+      name:
+        t.name || "",
+
+      storeName:
+        t.storeName || "",
+
+      configured:
+        !!t.configured,
+
+      orientation:
+        t.orientation ||
+        "portrait",
+
+      mediaType:
+        t.mediaType ||
+        "image",
+
+      mediaUrl:
+        t.mediaUrl ||
+        "",
+
+      tickerText:
+        t.tickerText ||
+        "Bem-vindo!",
+
+      tickerIcon:
+        t.tickerIcon ||
+        "",
+
+      soundEnabled:
+        t.soundEnabled === true
+    })
+  );
 }
 
-function applyCommandToTotem(t, data) {
-  if (data.name !== undefined) {
-    t.name = data.name;
-    t.storeName = data.name;
+
+function applyCommandToTotem(
+  t,
+  data
+) {
+
+  if (
+    data.name !== undefined
+  ) {
+
+    t.name =
+      String(data.name);
+
+    t.storeName =
+      String(data.name);
   }
 
-  if (data.storeName !== undefined) {
-    t.storeName = data.storeName;
+
+  if (
+    data.storeName !== undefined
+  ) {
+
+    t.storeName =
+      String(data.storeName);
   }
 
-  if (data.orientation !== undefined) {
-    t.orientation = data.orientation;
+
+  if (
+    data.orientation !== undefined
+  ) {
+
+    t.orientation =
+      data.orientation ===
+      "landscape"
+        ? "landscape"
+        : "portrait";
   }
 
-  if (data.mediaUrl !== undefined) {
-    t.mediaUrl = data.mediaUrl;
+
+  if (
+    data.mediaUrl !== undefined
+  ) {
+
+    t.mediaUrl =
+      String(data.mediaUrl);
   }
 
-  if (data.mediaType !== undefined) {
-    t.mediaType = data.mediaType;
+
+  if (
+    data.mediaType !== undefined
+  ) {
+
+    t.mediaType =
+      data.mediaType;
   }
 
-  if (data.tickerText !== undefined) {
-    t.tickerText = data.tickerText;
+
+  if (
+    data.tickerText !== undefined
+  ) {
+
+    t.tickerText =
+      String(data.tickerText);
   }
 
-  if (data.tickerIcon !== undefined) {
-    t.tickerIcon = data.tickerIcon;
+
+  if (
+    data.tickerIcon !== undefined
+  ) {
+
+    t.tickerIcon =
+      String(data.tickerIcon);
   }
+
+
+  if (
+    data.soundEnabled !== undefined
+  ) {
+
+    t.soundEnabled =
+      data.soundEnabled === true;
+  }
+
 
   t.configured = true;
 }
 
-function safeContentType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
+
+function safeContentType(
+  filePath
+) {
+
+  const ext =
+    path.extname(
+      filePath
+    ).toLowerCase();
+
 
   const tipos = {
-    ".html": "text/html; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".json": "application/json; charset=utf-8",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".svg": "image/svg+xml",
-    ".mp4": "video/mp4",
-    ".webm": "video/webm"
+
+    ".html":
+      "text/html; charset=utf-8",
+
+    ".js":
+      "application/javascript; charset=utf-8",
+
+    ".css":
+      "text/css; charset=utf-8",
+
+    ".json":
+      "application/json; charset=utf-8",
+
+    ".png":
+      "image/png",
+
+    ".jpg":
+      "image/jpeg",
+
+    ".jpeg":
+      "image/jpeg",
+
+    ".gif":
+      "image/gif",
+
+    ".svg":
+      "image/svg+xml",
+
+    ".mp4":
+      "video/mp4",
+
+    ".webm":
+      "video/webm"
   };
 
-  return tipos[ext] ||
-    "application/octet-stream";
+
+  return (
+    tipos[ext] ||
+    "application/octet-stream"
+  );
 }
 
-const server = http.createServer((req, res) => {
-  let filePath;
 
-  if (
-    req.url === "/api/totems" ||
-    req.url === "/api/dados"
-  ) {
-    res.writeHead(200, {
-      "Content-Type":
-        "application/json; charset=utf-8"
-    });
+const server =
+  http.createServer(
+    (req, res) => {
 
-    return res.end(
-      JSON.stringify(buildTotemList())
-    );
-  }
+      let filePath;
 
-  if (
-    req.url === "/" ||
-    req.url === "/player"
-  ) {
-    filePath = path.join(
-      __dirname,
-      "index.html"
-    );
-  } else if (
-    req.url === "/admin" ||
-    req.url === "/admin.html"
-  ) {
-    filePath = path.join(
-      __dirname,
-      "admin.html"
-    );
-  } else {
-    const requested =
-      decodeURIComponent(
-        req.url.split("?")[0]
-      );
 
-    filePath = path.join(
-      __dirname,
-      requested
-    );
-  }
+      if (
+        req.url ===
+          "/api/totems" ||
+        req.url ===
+          "/api/dados"
+      ) {
 
-  fs.readFile(
-    filePath,
-    (erro, conteudo) => {
-      if (erro) {
-        res.writeHead(404);
+        res.writeHead(
+          200,
+          {
+            "Content-Type":
+              "application/json; charset=utf-8"
+          }
+        );
+
         return res.end(
-          "Arquivo não encontrado"
+          JSON.stringify(
+            buildTotemList()
+          )
         );
       }
 
-      res.writeHead(200, {
-        "Content-Type":
-          safeContentType(filePath),
-        "Cache-Control": "no-cache"
-      });
 
-      res.end(conteudo);
+      if (
+        req.url === "/" ||
+        req.url === "/player"
+      ) {
+
+        filePath =
+          path.join(
+            __dirname,
+            "index.html"
+          );
+
+      } else if (
+        req.url === "/admin" ||
+        req.url === "/admin.html"
+      ) {
+
+        filePath =
+          path.join(
+            __dirname,
+            "admin.html"
+          );
+
+      } else {
+
+        const requested =
+          decodeURIComponent(
+            req.url
+              .split("?")[0]
+          );
+
+        filePath =
+          path.join(
+            __dirname,
+            requested
+          );
+      }
+
+
+      fs.readFile(
+        filePath,
+        (erro, conteudo) => {
+
+          if (erro) {
+
+            res.writeHead(404);
+
+            return res.end(
+              "Arquivo não encontrado"
+            );
+          }
+
+
+          res.writeHead(
+            200,
+            {
+              "Content-Type":
+                safeContentType(
+                  filePath
+                ),
+
+              "Cache-Control":
+                "no-cache"
+            }
+          );
+
+          res.end(
+            conteudo
+          );
+        }
+      );
     }
   );
-});
 
-const wss = new WebSocket.Server({
-  server
-});
+
+const wss =
+  new WebSocket.Server({
+    server
+  });
+
 
 function heartbeat() {
   this.isAlive = true;
 }
 
-wss.on("connection", ws => {
-  ws.isAlive = true;
 
-  ws.on("pong", heartbeat);
+wss.on(
+  "connection",
+  ws => {
 
-  const interval = setInterval(() => {
-    if (ws.isAlive === false) {
-      return ws.terminate();
-    }
+    ws.isAlive = true;
 
-    ws.isAlive = false;
-    ws.ping();
-
-  }, 30000);
-
-  ws.on("message", async mensagem => {
-    try {
-      const data =
-        JSON.parse(mensagem.toString());
-
-      switch (data.type) {
-
-        case "ping":
-
-          if (
-            ws.readyState ===
-            WebSocket.OPEN
-          ) {
-            ws.send(JSON.stringify({
-              type: "pong"
-            }));
-          }
-
-          break;
-
-
-        case "register_admin":
-
-          ws.clientType = "admin";
-
-          adminSockets.add(ws);
-
-          ws.send(JSON.stringify({
-            type: "totem_list",
-            totems: buildTotemList()
-          }));
-
-          break;
-
-
-        case "register_totem": {
-
-          ws.clientType = "totem";
-
-          const clientId =
-            data.totemId ||
-            generateUniqueId();
-
-          if (!totems[clientId]) {
-
-            totems[clientId] = {
-              id: clientId,
-              name: "",
-              storeName: "",
-              configured: true,
-              orientation: "portrait",
-              mediaType: "image",
-              mediaUrl: "",
-              tickerText: "Bem-vindo!",
-              tickerIcon: "",
-              lastCommands: {}
-            };
-          }
-
-          const t = totems[clientId];
-
-          if (
-            t.ws &&
-            t.ws !== ws &&
-            t.ws.readyState ===
-            WebSocket.OPEN
-          ) {
-            try {
-              t.ws.close();
-            } catch {}
-          }
-
-          t.id = clientId;
-          t.ws = ws;
-          t.online = true;
-
-          if (data.name) {
-            t.name = data.name;
-          }
-
-          if (data.storeName) {
-            t.storeName =
-              data.storeName;
-          }
-
-          if (!t.orientation) {
-            t.orientation = "portrait";
-          }
-
-          if (!t.mediaType) {
-            t.mediaType = "image";
-          }
-
-          if (!t.mediaUrl) {
-            t.mediaUrl = "";
-          }
-
-          if (!t.tickerText) {
-            t.tickerText =
-              "Bem-vindo!";
-          }
-
-          if (!t.lastCommands) {
-            t.lastCommands = {};
-          }
-
-          ws.totemId = clientId;
-
-          await saveDatabase();
-
-          ws.send(JSON.stringify({
-            type: "totem_registered",
-            totemId: clientId
-          }));
-
-          sendCanonicalState(ws, t);
-
-          notifyAdminTotemList();
-
-          break;
-        }
-
-
-        case "totem_command": {
-
-          if (ws.clientType !== "admin") {
-            break;
-          }
-
-          const id = data.totemId;
-
-          if (!id || !totems[id]) {
-            break;
-          }
-
-          const t = totems[id];
-
-          applyCommandToTotem(t, data);
-
-          const commandKey =
-            data.commandKey ||
-            data.command ||
-            data.action ||
-            `cmd_${Date.now()}`;
-
-          t.lastCommands[commandKey] = {
-            type: "totem_command",
-            orientation: t.orientation,
-            mediaType: t.mediaType,
-            mediaUrl: t.mediaUrl,
-            tickerText: t.tickerText,
-            tickerIcon: t.tickerIcon,
-            name: t.name,
-            storeName: t.storeName
-          };
-
-          await saveDatabase();
-
-          if (
-            t.ws &&
-            t.ws.readyState ===
-            WebSocket.OPEN
-          ) {
-            sendCanonicalState(
-              t.ws,
-              t
-            );
-          }
-
-          notifyAdminTotemList();
-
-          break;
-        }
-
-
-        case "delete_totem": {
-
-          if (ws.clientType !== "admin") {
-            break;
-          }
-
-          const id = data.totemId;
-
-          if (!id || !totems[id]) {
-            break;
-          }
-
-          const t = totems[id];
-
-          if (
-            t.ws &&
-            t.ws.readyState ===
-            WebSocket.OPEN
-          ) {
-            try {
-              t.ws.close();
-            } catch {}
-          }
-
-          delete totems[id];
-
-          await saveDatabase();
-
-          notifyAdminTotemList();
-
-          break;
-        }
-
-
-        default:
-
-          console.warn(
-            "Tipo desconhecido:",
-            data.type
-          );
-      }
-
-    } catch (erro) {
-      console.error(
-        "Erro ao processar mensagem:",
-        erro
-      );
-    }
-  });
-
-
-  ws.on("close", () => {
-
-    clearInterval(interval);
-
-    if (ws.clientType === "admin") {
-      adminSockets.delete(ws);
-    }
-
-    if (ws.clientType === "totem") {
-
-      const id = ws.totemId;
-
-      if (
-        id &&
-        totems[id] &&
-        totems[id].ws === ws
-      ) {
-
-        totems[id].online = false;
-        totems[id].ws = null;
-
-        notifyAdminTotemList();
-      }
-    }
-  });
-
-
-  ws.on("error", erro => {
-    console.error(
-      "WebSocket erro:",
-      erro
+    ws.on(
+      "pong",
+      heartbeat
     );
-  });
 
-});
+
+    const interval =
+      setInterval(
+        () => {
+
+          if (
+            ws.isAlive === false
+          ) {
+
+            return ws.terminate();
+          }
+
+          ws.isAlive = false;
+
+          ws.ping();
+
+        },
+        30000
+      );
+
+
+    ws.on(
+      "message",
+      async mensagem => {
+
+        try {
+
+          const data =
+            JSON.parse(
+              mensagem.toString()
+            );
+
+
+          switch (data.type) {
+
+
+            case "ping":
+
+              if (
+                ws.readyState ===
+                WebSocket.OPEN
+              ) {
+
+                ws.send(
+                  JSON.stringify({
+                    type: "pong"
+                  })
+                );
+              }
+
+              break;
+
+
+            case "register_admin":
+
+              ws.clientType =
+                "admin";
+
+              adminSockets.add(
+                ws
+              );
+
+              ws.send(
+                JSON.stringify({
+
+                  type:
+                    "totem_list",
+
+                  totems:
+                    buildTotemList()
+                })
+              );
+
+              break;
+
+
+            case "register_totem": {
+
+              ws.clientType =
+                "totem";
+
+
+              const clientId =
+                data.totemId ||
+                generateUniqueId();
+
+
+              if (
+                !totems[clientId]
+              ) {
+
+                totems[clientId] = {
+
+                  id:
+                    clientId,
+
+                  name:
+                    data.name || "",
+
+                  storeName:
+                    data.storeName || "",
+
+                  configured:
+                    true,
+
+                  orientation:
+                    "portrait",
+
+                  mediaType:
+                    "image",
+
+                  mediaUrl:
+                    "",
+
+                  tickerText:
+                    "Bem-vindo!",
+
+                  tickerIcon:
+                    "",
+
+                  soundEnabled:
+                    false,
+
+                  lastCommands:
+                    {}
+                };
+              }
+
+
+              const t =
+                totems[clientId];
+
+
+              if (
+                t.ws &&
+                t.ws !== ws &&
+                t.ws.readyState ===
+                  WebSocket.OPEN
+              ) {
+
+                try {
+                  t.ws.close();
+                } catch {}
+              }
+
+
+              t.id =
+                clientId;
+
+              t.ws =
+                ws;
+
+              t.online =
+                true;
+
+
+              /*
+               * IMPORTANTE:
+               *
+               * O totem só atualiza nome
+               * pelo que vier do aparelho
+               * se o banco ainda estiver vazio.
+               *
+               * A configuração existente
+               * no Drive permanece.
+               */
+
+
+              if (
+                !t.name &&
+                data.name
+              ) {
+
+                t.name =
+                  data.name;
+              }
+
+
+              if (
+                !t.storeName &&
+                data.storeName
+              ) {
+
+                t.storeName =
+                  data.storeName;
+              }
+
+
+              if (!t.orientation) {
+                t.orientation =
+                  "portrait";
+              }
+
+
+              if (!t.mediaType) {
+                t.mediaType =
+                  "image";
+              }
+
+
+              if (
+                t.mediaUrl ===
+                undefined
+              ) {
+
+                t.mediaUrl =
+                  "";
+              }
+
+
+              if (!t.tickerText) {
+
+                t.tickerText =
+                  "Bem-vindo!";
+              }
+
+
+              if (
+                t.tickerIcon ===
+                undefined
+              ) {
+
+                t.tickerIcon =
+                  "";
+              }
+
+
+              if (
+                t.soundEnabled ===
+                undefined
+              ) {
+
+                t.soundEnabled =
+                  false;
+              }
+
+
+              if (!t.lastCommands) {
+
+                t.lastCommands =
+                  {};
+              }
+
+
+              ws.totemId =
+                clientId;
+
+
+              await saveDatabase();
+
+
+              ws.send(
+                JSON.stringify({
+
+                  type:
+                    "totem_registered",
+
+                  totemId:
+                    clientId
+                })
+              );
+
+
+              /*
+               * Aqui está uma das partes
+               * mais importantes:
+               *
+               * assim que o aparelho liga,
+               * recebe tudo o que estava
+               * salvo no Drive.
+               */
+
+              sendCanonicalState(
+                ws,
+                t
+              );
+
+
+              notifyAdminTotemList();
+
+              break;
+            }
+
+
+            case "totem_command": {
+
+              if (
+                ws.clientType !==
+                "admin"
+              ) {
+                break;
+              }
+
+
+              const id =
+                data.totemId;
+
+
+              if (
+                !id ||
+                !totems[id]
+              ) {
+                break;
+              }
+
+
+              const t =
+                totems[id];
+
+
+              applyCommandToTotem(
+                t,
+                data
+              );
+
+
+              const commandKey =
+                data.commandKey ||
+                data.command ||
+                data.action ||
+                `cmd_${Date.now()}`;
+
+
+              t.lastCommands[
+                commandKey
+              ] = {
+
+                type:
+                  "totem_command",
+
+                orientation:
+                  t.orientation,
+
+                mediaType:
+                  t.mediaType,
+
+                mediaUrl:
+                  t.mediaUrl,
+
+                tickerText:
+                  t.tickerText,
+
+                tickerIcon:
+                  t.tickerIcon,
+
+                soundEnabled:
+                  t.soundEnabled,
+
+                name:
+                  t.name,
+
+                storeName:
+                  t.storeName
+              };
+
+
+              /*
+               * SALVA MESMO SE O TOTEM
+               * ESTIVER OFFLINE.
+               */
+
+              await saveDatabase();
+
+
+              /*
+               * Se estiver online,
+               * recebe imediatamente.
+               */
+
+              if (
+                t.ws &&
+                t.ws.readyState ===
+                  WebSocket.OPEN
+              ) {
+
+                sendCanonicalState(
+                  t.ws,
+                  t
+                );
+              }
+
+
+              /*
+               * O painel recebe a nova
+               * informação mesmo que o
+               * aparelho esteja desligado.
+               */
+
+              notifyAdminTotemList();
+
+              break;
+            }
+
+
+            case "delete_totem": {
+
+              if (
+                ws.clientType !==
+                "admin"
+              ) {
+                break;
+              }
+
+
+              const id =
+                data.totemId;
+
+
+              if (
+                !id ||
+                !totems[id]
+              ) {
+                break;
+              }
+
+
+              const t =
+                totems[id];
+
+
+              if (
+                t.ws &&
+                t.ws.readyState ===
+                  WebSocket.OPEN
+              ) {
+
+                try {
+                  t.ws.close();
+                } catch {}
+              }
+
+
+              delete totems[id];
+
+
+              await saveDatabase();
+
+
+              notifyAdminTotemList();
+
+              break;
+            }
+
+
+            default:
+
+              console.warn(
+                "Tipo desconhecido:",
+                data.type
+              );
+          }
+
+
+        } catch (erro) {
+
+          console.error(
+            "Erro ao processar mensagem:",
+            erro
+          );
+        }
+
+      });
+
+
+    ws.on(
+      "close",
+      () => {
+
+        clearInterval(
+          interval
+        );
+
+
+        if (
+          ws.clientType ===
+          "admin"
+        ) {
+
+          adminSockets.delete(
+            ws
+          );
+        }
+
+
+        if (
+          ws.clientType ===
+          "totem"
+        ) {
+
+          const id =
+            ws.totemId;
+
+
+          if (
+            id &&
+            totems[id] &&
+            totems[id].ws === ws
+          ) {
+
+            totems[id].online =
+              false;
+
+            totems[id].ws =
+              null;
+
+            notifyAdminTotemList();
+          }
+        }
+      }
+    );
+
+
+    ws.on(
+      "error",
+      erro => {
+
+        console.error(
+          "WebSocket erro:",
+          erro
+        );
+      }
+    );
+
+  }
+);
+
 
 async function start() {
 
   await loadDatabase();
 
-  server.listen(PORT, () => {
 
-    console.log(
-      `Manaus Totem rodando na porta ${PORT}`
-    );
+  server.listen(
+    PORT,
+    () => {
 
-    console.log(
-      `WebSocket: ${WS_URL}`
-    );
+      console.log(
+        `Manaus Totem rodando na porta ${PORT}`
+      );
 
-    console.log(
-      "Banco Google Drive ativo."
-    );
-  });
+      console.log(
+        `WebSocket: ${WS_URL}`
+      );
+
+      console.log(
+        "Banco Google Drive ativo."
+      );
+    }
+  );
 }
+
 
 start();
