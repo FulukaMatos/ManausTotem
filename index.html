@@ -1,46 +1,1338 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manaus Totem</title>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Manaus Totem</title>
+
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}#app{position:absolute;left:50%;top:50%;width:100vw;height:100vh;transform:translate(-50%,-50%);background:#000;overflow:hidden}#media{position:absolute;inset:0 0 60px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}#media img{width:100%;height:100%;object-fit:contain}video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s}video.active{opacity:1;visibility:visible}#ticker{position:absolute;bottom:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;background:#000e;color:#fff;font:24px Arial;white-space:nowrap;overflow:hidden;z-index:20}#icon{max-width:34px;max-height:34px}#connection{position:absolute;top:12px;right:12px;width:14px;height:14px;border-radius:50%;background:#d00;z-index:50}.online{background:#19c719!important}.landscape{width:100vw!important;height:100vh!important;transform:translate(-50%,-50%)!important}@media(min-width:768px) and (orientation:landscape){#app{width:100vh;height:100vw;transform:translate(-50%,-50%) rotate(-90deg)}}
-</style></head><body><div id="app"><div id="connection"></div><div id="media"><img id="image" style="display:none"><video id="a" playsinline preload="auto"></video><video id="b" playsinline preload="auto"></video></div><div id="ticker"><img id="icon" style="display:none"><span id="text">Bem-vindo!</span></div></div>
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000;
+}
+
+body{
+  font-family:Arial,sans-serif;
+}
+
+#app-container{
+  position:absolute;
+
+  left:50%;
+  top:50%;
+
+  width:100vw;
+  height:100vh;
+
+  transform:
+    translate(-50%,-50%);
+
+  background:#000;
+
+  overflow:hidden;
+}
+
+#media-display{
+
+  position:absolute;
+
+  inset:
+    0 0 60px 0;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  overflow:hidden;
+
+  background:#000;
+}
+
+#media-display img,
+#media-display iframe{
+
+  width:100%;
+  height:100%;
+
+  border:0;
+
+  object-fit:contain;
+
+  display:block;
+}
+
+.video-layer{
+
+  position:absolute;
+
+  inset:0;
+
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+
+  background:#000;
+
+  opacity:0;
+
+  visibility:hidden;
+
+  pointer-events:none;
+
+  transition:
+    opacity .18s linear;
+}
+
+.video-layer.active{
+
+  opacity:1;
+
+  visibility:visible;
+}
+
+#placeholder{
+
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+
+  display:block;
+}
+
+#ticker{
+
+  position:absolute;
+
+  left:0;
+  right:0;
+  bottom:0;
+
+  height:60px;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:10px;
+
+  padding:
+    0 20px;
+
+  background:
+    rgba(0,0,0,.88);
+
+  color:#fff;
+
+  font-size:24px;
+
+  white-space:nowrap;
+
+  overflow:hidden;
+
+  z-index:20;
+}
+
+#ticker-icon{
+
+  max-height:34px;
+  max-width:34px;
+}
+
+#connection{
+
+  position:absolute;
+
+  top:12px;
+  right:12px;
+
+  width:14px;
+  height:14px;
+
+  border-radius:50%;
+
+  background:#d00;
+
+  z-index:50;
+
+  opacity:.85;
+}
+
+#connection.online{
+
+  background:#19c719;
+}
+
+
+/*
+ * RETRATO PADRÃO
+ *
+ * Em uma tela física paisagem,
+ * o conteúdo é girado para ficar
+ * como um totem vertical.
+ */
+
+@media
+(min-width:768px)
+and (orientation:landscape){
+
+  #app-container{
+
+    width:100vh;
+    height:100vw;
+
+    transform:
+      translate(-50%,-50%)
+      rotate(-90deg);
+  }
+}
+
+
+/*
+ * PAISAGEM ENVIADA PELO ADMIN
+ *
+ * Cancela o giro padrão.
+ */
+
+#app-container.landscape{
+
+  width:100vw !important;
+  height:100vh !important;
+
+  transform:
+    translate(-50%,-50%) !important;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="app-container">
+
+  <div id="connection"></div>
+
+
+  <div id="media-display">
+
+    <img
+      id="placeholder"
+      src=""
+      alt=""
+    >
+
+
+    <img
+      id="image-display"
+      style="display:none"
+      alt=""
+    >
+
+
+    <iframe
+      id="iframe-display"
+      style="display:none"
+      allow="autoplay; fullscreen">
+    </iframe>
+
+
+    <video
+      id="video-a"
+      class="video-layer"
+      playsinline
+      preload="auto">
+    </video>
+
+
+    <video
+      id="video-b"
+      class="video-layer"
+      playsinline
+      preload="auto">
+    </video>
+
+  </div>
+
+
+  <div id="ticker">
+
+    <img
+      id="ticker-icon"
+      style="display:none"
+      alt=""
+    >
+
+    <span id="ticker-text">
+      Bem-vindo!
+    </span>
+
+  </div>
+
+</div>
+
+
 <script>
-const SERVER="wss://manaustotem.onrender.com",app=document.getElementById("app"),conn=document.getElementById("connection"),image=document.getElementById("image"),a=document.getElementById("a"),b=document.getElementById("b"),text=document.getElementById("text"),icon=document.getElementById("icon");
-let socket,reconnect,config={orientation:"portrait",mediaType:"image",mediaUrl:"",tickerText:"Bem-vindo!",tickerIcon:"",audioEnabled:false},items=[],index=0,generation=0,timer;
-let id=localStorage.getItem("manaus_totem_id")||("totem_"+Math.random().toString(36).slice(2,11));localStorage.setItem("manaus_totem_id",id);
-const key="totem_config_"+id;
-function online(v){conn.classList.toggle("online",v)}
-function urls(){return String(config.mediaUrl||"").split(/[\n,]+/).map(x=>x.trim()).filter(Boolean)}
-function isVideo(u){return /\.(mp4|webm|ogg)(\?|#|$)/i.test(u)||/video/i.test(u)}
-function reset(){clearTimeout(timer);timer=null;image.style.display="none";[a,b].forEach(v=>{v.pause();v.removeAttribute("src");v.load();v.classList.remove("active");v.onended=null;v.onerror=null})}
-function setOrientation(v){app.classList.toggle("landscape",v==="landscape")}
-function showImage(i,g){if(g!==generation)return;reset();image.style.display="block";image.src=items[i];timer=setTimeout(()=>{index=(index+1)%items.length;showNext(g)},10000)}
-function showNext(g){if(g!==generation||!items.length)return;let u=items[index];if(isVideo(u))playVideo(u,g);else showImage(index,g)}
-function playVideo(u,g){
- let v=(playVideo.last===a)?b:a;playVideo.last=v;resetVideo(v);v.src=u;v.muted=!config.audioEnabled;v.volume=1;v.classList.add("active");
- v.onended=()=>{if(g!==generation)return;index=(index+1)%items.length;showNext(g)};
- v.onerror=()=>{if(g!==generation)return;index=(index+1)%items.length;setTimeout(()=>showNext(g),300)};
- v.play().catch(()=>setTimeout(()=>v.play().catch(()=>{}),400));
+
+const SERVER_URL =
+  "wss://manaustotem.onrender.com";
+
+
+let socket = null;
+
+let reconnectTimer = null;
+
+let pingInterval = null;
+
+
+let totemId =
+  localStorage.getItem(
+    "manaus_totem_id"
+  );
+
+
+if(!totemId){
+
+  totemId =
+    "totem_" +
+    Math.random()
+      .toString(36)
+      .substring(2,11);
+
+
+  localStorage.setItem(
+    "manaus_totem_id",
+    totemId
+  );
 }
-function resetVideo(v){v.pause();v.classList.remove("active");v.onended=null;v.onerror=null}
-function apply(data,save=true){
- if(!data)return;Object.assign(config,data);setOrientation(config.orientation);text.textContent=config.tickerText||"";
- if(config.tickerIcon){icon.src=config.tickerIcon;icon.style.display="block"}else icon.style.display="none";
- items=urls();index=0;generation++;let g=generation;reset();
- if(!items.length){return}
- if(config.mediaType==="mixed"){showNext(g)}
- else if(config.mediaType==="video"){showVideoPlaylist(g)}
- else{showImage(0,g)}
- if(save)localStorage.setItem(key,JSON.stringify(config))
+
+
+const storageKey =
+  "totem_config_" + totemId;
+
+
+let currentConfig = {
+
+  orientation:
+    "portrait",
+
+  mediaType:
+    "image",
+
+  mediaUrl:
+    "",
+
+  tickerText:
+    "Bem-vindo!",
+
+  tickerIcon:
+    "",
+
+  soundEnabled:
+    false
+};
+
+
+let playlist = [];
+
+let currentIndex = 0;
+
+let playbackGeneration = 0;
+
+let imageTimer = null;
+
+
+const app =
+  document.getElementById(
+    "app-container"
+  );
+
+
+const connection =
+  document.getElementById(
+    "connection"
+  );
+
+
+const placeholder =
+  document.getElementById(
+    "placeholder"
+  );
+
+
+const imageDisplay =
+  document.getElementById(
+    "image-display"
+  );
+
+
+const iframeDisplay =
+  document.getElementById(
+    "iframe-display"
+  );
+
+
+const videoA =
+  document.getElementById(
+    "video-a"
+  );
+
+
+const videoB =
+  document.getElementById(
+    "video-b"
+  );
+
+
+const tickerText =
+  document.getElementById(
+    "ticker-text"
+  );
+
+
+const tickerIcon =
+  document.getElementById(
+    "ticker-icon"
+  );
+
+
+function setOnline(online){
+
+  connection.classList.toggle(
+    "online",
+    online
+  );
 }
-function showVideoPlaylist(g){if(!items.length)return;playVideo.last=b;playVideo(items[index],g)}
+
+
+function saveLocalState(){
+
+  try{
+
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(
+        currentConfig
+      )
+    );
+
+  }catch(e){}
+}
+
+
+function loadLocalState(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        storageKey
+      );
+
+
+    if(saved){
+
+      const data =
+        JSON.parse(
+          saved
+        );
+
+
+      applyDisplayState(
+        data,
+        false
+      );
+    }
+
+  }catch(e){}
+}
+
+
+function setOrientation(
+  value
+){
+
+  app.classList.toggle(
+    "landscape",
+    value === "landscape"
+  );
+}
+
+
+function resetMedia(){
+
+  clearTimeout(
+    imageTimer
+  );
+
+  imageTimer = null;
+
+
+  imageDisplay.style.display =
+    "none";
+
+
+  iframeDisplay.style.display =
+    "none";
+
+
+  placeholder.style.display =
+    "none";
+
+
+  [videoA,videoB]
+    .forEach(video=>{
+
+      try{
+
+        video.pause();
+
+        video.removeAttribute(
+          "src"
+        );
+
+        video.load();
+
+      }catch(e){}
+
+
+      video.classList.remove(
+        "active"
+      );
+
+      video.onended =
+        null;
+
+      video.onerror =
+        null;
+
+    });
+}
+
+
+function getPlaylist(
+  url
+){
+
+  return String(
+    url || ""
+  )
+
+  .split(/[\n,]+/)
+
+  .map(
+    v => v.trim()
+  )
+
+  .filter(Boolean);
+}
+
+
+/*
+ * Identifica se uma URL é vídeo.
+ */
+
+function isVideoUrl(
+  url
+){
+
+  const clean =
+    String(url || "")
+      .split("?")[0]
+      .split("#")[0]
+      .toLowerCase();
+
+
+  return (
+    clean.endsWith(".mp4") ||
+    clean.endsWith(".webm") ||
+    clean.endsWith(".ogg") ||
+    clean.endsWith(".mov") ||
+    clean.endsWith(".m4v")
+  );
+}
+
+
+/*
+ * IMAGEM
+ */
+
+function showImage(
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+
+  resetMedia();
+
+
+  imageDisplay.style.display =
+    "block";
+
+
+  imageDisplay.src =
+    playlist[index];
+
+
+  imageTimer =
+    setTimeout(
+      ()=>{
+
+        if(
+          generation !==
+          playbackGeneration
+        ){
+          return;
+        }
+
+
+        currentIndex =
+          (
+            currentIndex + 1
+          ) % playlist.length;
+
+
+        playMixedItem(
+          currentIndex,
+          generation
+        );
+
+      },
+      10000
+    );
+}
+
+
+/*
+ * VÍDEO
+ */
+
+function playVideoItem(
+  video,
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+
+  if(
+    !playlist.length
+  ){
+    return;
+  }
+
+
+  const url =
+    playlist[index];
+
+
+  const other =
+    video === videoA
+      ? videoB
+      : videoA;
+
+
+  video.onended =
+    null;
+
+  video.onerror =
+    null;
+
+
+  video.src =
+    url;
+
+
+  video.playsInline =
+    true;
+
+
+  video.muted =
+    !currentConfig.soundEnabled;
+
+
+  video.volume =
+    1;
+
+
+  video.currentTime =
+    0;
+
+
+  video.classList.add(
+    "active"
+  );
+
+
+  const advance =
+    ()=>{
+
+      if(
+        generation !==
+        playbackGeneration
+      ){
+        return;
+      }
+
+
+      currentIndex =
+        (
+          currentIndex + 1
+        ) % playlist.length;
+
+
+      video.classList.remove(
+        "active"
+      );
+
+
+      video.pause();
+
+      video.removeAttribute(
+        "src"
+      );
+
+      video.load();
+
+
+      playMixedItem(
+        currentIndex,
+        generation
+      );
+    };
+
+
+  video.onended =
+    advance;
+
+
+  video.onerror =
+    ()=>{
+
+      if(
+        generation !==
+        playbackGeneration
+      ){
+        return;
+      }
+
+
+      setTimeout(
+        ()=>{
+
+          if(
+            generation ===
+            playbackGeneration
+          ){
+
+            advance();
+          }
+
+        },
+        300
+      );
+    };
+
+
+  const promise =
+    video.play();
+
+
+  if(promise){
+
+    promise.catch(
+      ()=>{
+
+        /*
+         * Segunda tentativa.
+         */
+
+        setTimeout(
+          ()=>{
+
+            if(
+              generation ===
+              playbackGeneration
+            ){
+
+              video.muted =
+                !currentConfig
+                  .soundEnabled;
+
+              video.play()
+                .catch(()=>{});
+            }
+
+          },
+          500
+        );
+
+      }
+    );
+  }
+}
+
+
+/*
+ * PLAYLIST MISTA
+ *
+ * Pode ser:
+ *
+ * imagem
+ * vídeo
+ * imagem
+ * vídeo
+ * vídeo
+ * imagem
+ *
+ * Tudo na mesma playlist.
+ */
+
+function playMixedItem(
+  index,
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration
+  ){
+    return;
+  }
+
+
+  if(
+    !playlist.length
+  ){
+    return;
+  }
+
+
+  currentIndex =
+    index %
+    playlist.length;
+
+
+  const url =
+    playlist[currentIndex];
+
+
+  if(
+    isVideoUrl(url)
+  ){
+
+    const video =
+      currentIndex % 2 === 0
+        ? videoA
+        : videoB;
+
+
+    resetMedia();
+
+
+    playVideoItem(
+      video,
+      currentIndex,
+      generation
+    );
+
+  }else{
+
+    showImage(
+      currentIndex,
+      generation
+    );
+  }
+}
+
+
+/*
+ * PLAYLIST SOMENTE VÍDEO
+ */
+
+function startVideoPlaylist(
+  generation
+){
+
+  if(
+    generation !==
+    playbackGeneration ||
+    !playlist.length
+  ){
+    return;
+  }
+
+
+  currentIndex =
+    Math.max(
+      0,
+      Math.min(
+        currentIndex,
+        playlist.length - 1
+      )
+    );
+
+
+  playMixedItem(
+    currentIndex,
+    generation
+  );
+}
+
+
+/*
+ * APLICA TODA A CONFIGURAÇÃO
+ */
+
+function applyDisplayState(
+  data,
+  save=true
+){
+
+  if(!data){
+    return;
+  }
+
+
+  if(
+    data.orientation
+  ){
+
+    currentConfig.orientation =
+      data.orientation;
+
+
+    setOrientation(
+      data.orientation
+    );
+  }
+
+
+  if(
+    data.mediaType !==
+    undefined
+  ){
+
+    currentConfig.mediaType =
+      data.mediaType;
+  }
+
+
+  if(
+    data.mediaUrl !==
+    undefined
+  ){
+
+    currentConfig.mediaUrl =
+      data.mediaUrl;
+  }
+
+
+  if(
+    data.tickerText !==
+    undefined
+  ){
+
+    currentConfig.tickerText =
+      data.tickerText;
+  }
+
+
+  if(
+    data.tickerIcon !==
+    undefined
+  ){
+
+    currentConfig.tickerIcon =
+      data.tickerIcon;
+  }
+
+
+  if(
+    data.soundEnabled !==
+    undefined
+  ){
+
+    currentConfig.soundEnabled =
+      data.soundEnabled === true;
+  }
+
+
+  tickerText.textContent =
+    currentConfig.tickerText ||
+    "";
+
+
+  if(
+    currentConfig.tickerIcon
+  ){
+
+    tickerIcon.src =
+      currentConfig.tickerIcon;
+
+    tickerIcon.style.display =
+      "block";
+
+  }else{
+
+    tickerIcon.style.display =
+      "none";
+  }
+
+
+  playlist =
+    getPlaylist(
+      currentConfig.mediaUrl
+    );
+
+
+  currentIndex =
+    0;
+
+
+  playbackGeneration++;
+
+
+  const generation =
+    playbackGeneration;
+
+
+  resetMedia();
+
+
+  if(
+    !playlist.length
+  ){
+
+    placeholder.style.display =
+      "block";
+
+    placeholder.src = "";
+
+
+  }else if(
+    currentConfig.mediaType ===
+    "iframe"
+  ){
+
+    iframeDisplay.style.display =
+      "block";
+
+
+    iframeDisplay.src =
+      playlist[0];
+
+
+  }else if(
+    currentConfig.mediaType ===
+      "mixed"
+  ){
+
+    playMixedItem(
+      0,
+      generation
+    );
+
+
+  }else if(
+    currentConfig.mediaType ===
+      "video"
+  ){
+
+    startVideoPlaylist(
+      generation
+    );
+
+
+  }else{
+
+    showImage(
+      0,
+      generation
+    );
+  }
+
+
+  if(save){
+
+    saveLocalState();
+  }
+}
+
+
+/*
+ * CONEXÃO
+ */
+
 function connect(){
- if(socket&&(socket.readyState===0||socket.readyState===1))return;
- socket=new WebSocket(SERVER);
- socket.onopen=()=>{online(true);socket.send(JSON.stringify({type:"register_totem",totemId:id,name:localStorage.getItem("totem_name")||"",storeName:localStorage.getItem("totem_store")||""}))};
- socket.onmessage=e=>{try{let d=JSON.parse(e.data);if(d.type==="totem_state"){apply(d);if(d.name!==undefined)localStorage.setItem("totem_name",d.name);if(d.storeName!==undefined)localStorage.setItem("totem_store",d.storeName)}}catch{}};
- socket.onclose=()=>{online(false);if(!reconnect)reconnect=setTimeout(()=>{reconnect=null;connect()},5000)};
- socket.onerror=()=>{online(false);try{socket.close()}catch{}};
+
+  if(
+    socket &&
+    (
+      socket.readyState ===
+        WebSocket.OPEN ||
+      socket.readyState ===
+        WebSocket.CONNECTING
+    )
+  ){
+
+    return;
+  }
+
+
+  try{
+
+    socket =
+      new WebSocket(
+        SERVER_URL
+      );
+
+  }catch(e){
+
+    scheduleReconnect();
+
+    return;
+  }
+
+
+  socket.onopen =
+    ()=>{
+
+      setOnline(true);
+
+
+      socket.send(
+        JSON.stringify({
+
+          type:
+            "register_totem",
+
+          totemId,
+
+          orientation:
+            currentConfig.orientation,
+
+          name:
+            localStorage.getItem(
+              "totem_name"
+            ) || "",
+
+          storeName:
+            localStorage.getItem(
+              "totem_store"
+            ) || ""
+        })
+      );
+
+
+      clearInterval(
+        pingInterval
+      );
+
+
+      pingInterval =
+        setInterval(
+          ()=>{
+
+            if(
+              socket &&
+              socket.readyState ===
+                WebSocket.OPEN
+            ){
+
+              socket.send(
+                JSON.stringify({
+                  type:"ping"
+                })
+              );
+            }
+
+          },
+          25000
+        );
+    };
+
+
+  socket.onmessage =
+    event=>{
+
+      try{
+
+        const data =
+          JSON.parse(
+            event.data
+          );
+
+
+        if(
+          data.type ===
+            "pong" ||
+          data.type ===
+            "totem_registered"
+        ){
+
+          return;
+        }
+
+
+        if(
+          data.type ===
+          "totem_state"
+        ){
+
+          applyDisplayState(
+            data,
+            true
+          );
+
+
+          if(
+            data.name !==
+            undefined
+          ){
+
+            localStorage.setItem(
+              "totem_name",
+              data.name || ""
+            );
+          }
+
+
+          if(
+            data.storeName !==
+            undefined
+          ){
+
+            localStorage.setItem(
+              "totem_store",
+              data.storeName || ""
+            );
+          }
+
+
+          return;
+        }
+
+
+        if(
+          data.type ===
+          "totem_command"
+        ){
+
+          applyDisplayState(
+            data,
+            true
+          );
+        }
+
+
+      }catch(e){}
+    };
+
+
+  socket.onclose =
+    ()=>{
+
+      setOnline(false);
+
+
+      clearInterval(
+        pingInterval
+      );
+
+
+      scheduleReconnect();
+    };
+
+
+  socket.onerror =
+    ()=>{
+
+      setOnline(false);
+
+
+      try{
+
+        socket.close();
+
+      }catch(e){}
+    };
 }
-addEventListener("DOMContentLoaded",()=>{try{let s=localStorage.getItem(key);if(s)apply(JSON.parse(s),false)}catch{}connect()});
-document.addEventListener("contextmenu",e=>e.preventDefault());
-</script></body></html>
+
+
+function scheduleReconnect(){
+
+  if(
+    reconnectTimer
+  ){
+
+    return;
+  }
+
+
+  reconnectTimer =
+    setTimeout(
+      ()=>{
+
+        reconnectTimer =
+          null;
+
+        connect();
+
+      },
+      5000
+    );
+}
+
+
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+
+    loadLocalState();
+
+    connect();
+  }
+);
+
+
+document.addEventListener(
+  "contextmenu",
+  e =>
+    e.preventDefault()
+);
+
+</script>
+
+</body>
+</html>
